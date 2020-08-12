@@ -2,6 +2,10 @@
 export class Pos {
     x = 0;
     y = 0;
+    set(x: number, y: number) {
+        this.x = x;
+        this.y = y;
+    }
     equal(x: number, y: number) {
         return (this.x === x && this.y === y);
     }
@@ -15,6 +19,7 @@ export class Pos {
 export class M2S_BaseTile {
     pos: Pos;
     color: number;
+    onField = false; // находится ли тайл сейчас на игровом поле
     constructor(x: number, y: number, color: number) {
         this.pos = new Pos(x, y);
         this.color = color;
@@ -56,22 +61,52 @@ export class M2S_BasePlayField {
         }
     }
 
-    /** Инициализация поля с помощью чисел.
+    /** Функция создания нового тайла на поле,
+     *  Может быть перегружена в классах-наследниках
+     */
+    createTile(x: number, y: number, color: number): M2S_BaseTile {
+        let newTile = new M2S_BaseTile(x, y, color);
+        return newTile;
+    }
+
+    protected _setTileOnField(tile: M2S_BaseTile, x: number, y: number) {
+        if (!tile.pos.equal(x, y)) {
+            // убираем тайл с его старого места
+            this.field[tile.pos.x][tile.pos.y] = null;
+            let oldTile = this.field[x][y];
+            if (oldTile) {
+                // по-хорошему - такой ситуации не должно быть
+                oldTile.onField = false;
+            }
+        }
+        // устанавливаем тайл на новое место
+        this.field[x][y] = tile;
+        tile.pos.set(x, y);
+        tile.onField = true;
+    }
+    /** Ставит(переставляет) тайл на поле, обновляя соответствующие переменные */
+    setTileOnField(tile: M2S_BaseTile, x: number, y: number, onInit=false) {
+        this._setTileOnField(tile, x, y);
+    }
+
+    /** Инициализация поля с помощью предустановленных чисел.
      *  Каждому числу соответствует цвет тайла, 0 - пустая клетка.
      *  Обрати внимание, что матрица arr транспонирована относительно field,
      *  это сделано для удобного задния поля в коде.
+     *  Вероятно, основное применение этой функции - тестирование.
      */
     initWith(arr: number[][]) {
         for (let x = 0; x < this.width; x++) {
             for (let y = 0; y < this.height; y++) {
                 let color = arr[y][x];
                 if (color > 0) {
-                    this.field[x][y] = new M2S_BaseTile(x, y, color);
+                    let newTile = this.createTile(x, y, color);
+                    this.setTileOnField(newTile, x, y, true);
                 }
             }
         }
     }
-    /** (Для тестов) Сравнивает цвета тайлов на поле с аналогичными элементами массива */
+    /** (Для тестов) Сравнивает цвета тайлов на поле с соответствующими числами массива */
     equals(arr: number[][]) {
         let mismatchFound = false;
         for (let x = 0; x < this.width; x++) {
@@ -93,6 +128,16 @@ export class M2S_BasePlayField {
         }
         return !mismatchFound;
     }
+    /** Инициализация поля случайным образом */
+    randomInit() {
+        for (let x = 0; x < this.width; x++) {
+            for (let y = 0; y < this.height; y++) {
+                let color = Math.floor(Math.random() * this.countColors) + 1;
+                let newTile = this.createTile(x, y, color);
+                this.setTileOnField(newTile, x, y, true);
+            }
+        }
+    }
 
     /** Функция дискретного перемещения тайлов на единицу вниз, с учетом других тайлов. */
     oneMoveDownTiles() {
@@ -108,9 +153,7 @@ export class M2S_BasePlayField {
                     // не двигаемся, если под тайлом препятствие
                     continue;
                 }
-                this.field[x][y + 1] = tile;
-                tile.pos.y = y + 1;
-                this.field[x][y] = null;
+                this.setTileOnField(tile, x, y + 1);
             }
         }
     }

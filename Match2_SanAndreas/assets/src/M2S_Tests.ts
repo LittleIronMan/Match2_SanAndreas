@@ -1,6 +1,6 @@
 import { M2S_BasePlayField, M2S_BaseTile, Pos } from './M2S_BasePlayField';
 
-export function testAll() {
+export function testAll(): boolean {
     let testList: {name: string, func: () => boolean}[] = [];
     testList.push({name: "Init #1", func: () => {
         let f = new M2S_BasePlayField(3, 3, 4);
