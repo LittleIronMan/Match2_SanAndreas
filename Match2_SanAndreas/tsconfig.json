@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "lib": [ "dom", "es5", "es6", "es2015.promise" ],
+    "target": "es6",
+
+    "strict": true,                           /* Enable all strict type-checking options. */
+    "strictNullChecks": true,              /* Enable strict null checks. */
+    "noImplicitAny": true,                 /* Raise error on expressions and declarations with an implied 'any' type. */
+
+    "experimentalDecorators": true,
+    "skipLibCheck": true
+  },
+  "exclude": [
+    "node_modules",
+    "library",
+    "local",
+    "temp",
+    "build",
+    "settings"
+  ]
+}
