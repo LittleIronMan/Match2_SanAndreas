@@ -69,11 +69,11 @@ export class M2S_BasePlayField {
         return newTile;
     }
 
-    protected _setTileOnField(tile: M2S_BaseTile, x: number, y: number) {
-        if (!tile.pos.equal(x, y)) {
+    protected _setTileOnField(tile: M2S_BaseTile | null, x: number, y: number) {
+        if (tile && tile.onField && !tile.pos.equal(x, y)) {
             // убираем тайл с его старого места
             this.field[tile.pos.x][tile.pos.y] = null;
-            let oldTile = this.field[x][y];
+            let oldTile = this.field[x][y]; // старый тайл на том месте, на которое мы хотим поставить новый тайл
             if (oldTile) {
                 // по-хорошему - такой ситуации не должно быть
                 oldTile.onField = false;
@@ -81,11 +81,13 @@ export class M2S_BasePlayField {
         }
         // устанавливаем тайл на новое место
         this.field[x][y] = tile;
-        tile.pos.set(x, y);
-        tile.onField = true;
+        if (tile) {
+            tile.pos.set(x, y);
+            tile.onField = true;
+        }
     }
     /** Ставит(переставляет) тайл на поле, обновляя соответствующие переменные */
-    setTileOnField(tile: M2S_BaseTile, x: number, y: number, onInit=false) {
+    setTileOnField(tile: M2S_BaseTile | null, x: number, y: number, onInit=false) {
         this._setTileOnField(tile, x, y);
     }
 
@@ -141,6 +143,7 @@ export class M2S_BasePlayField {
 
     /** Функция дискретного перемещения тайлов на единицу вниз, с учетом других тайлов. */
     oneMoveDownTiles() {
+        let hasDownMove = false;
         for (let y = this.height - 2; y >= 0; y--) {
             for (let x = 0; x < this.width; x++) {
                 let tile = this.field[x][y];
@@ -154,8 +157,10 @@ export class M2S_BasePlayField {
                     continue;
                 }
                 this.setTileOnField(tile, x, y + 1);
+                hasDownMove = true;
             }
         }
+        return hasDownMove;
     }
 
     /** Проверяет что позиция валидна для текущих размеров поля */
