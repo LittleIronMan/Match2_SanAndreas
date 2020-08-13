@@ -14131,7 +14131,7 @@ declare namespace cc {
 		v.subSelf(cc.v2(5, 5));// return Vec2 {x: 5, y: 5};
 		``` 
 		*/
-		subtract(vector: Vec2): Vec2;		
+		sub(vector: Vec2): Vec2;		
 		/**
 		!#en Multiplies this by a number.
 		!#zh 缩放当前向量。
@@ -14143,7 +14143,7 @@ declare namespace cc {
 		v.multiply(5);// return Vec2 {x: 50, y: 50};
 		``` 
 		*/
-		multiply(num: number): Vec2;		
+		mul(num: number): Vec2;		
 		/**
 		!#en Multiplies two vectors.
 		!#zh 分量相乘。

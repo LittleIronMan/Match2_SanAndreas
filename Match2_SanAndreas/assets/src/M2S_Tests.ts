@@ -1,4 +1,5 @@
 import { M2S_BasePlayField, M2S_BaseTile, Pos } from './M2S_BasePlayField';
+import { M2S_PlayField, tileWidth, tileHeight } from './M2S_SceneGameplay';
 
 export function testAll(): boolean {
     let testList: {name: string, func: () => boolean}[] = [];
@@ -78,6 +79,26 @@ export function testAll(): boolean {
             [4,3,1],
             [1,2,1]
         ]);
+    }});
+    testList.push({name: "Position convert #1", func: () => {
+        let f = new M2S_PlayField(3, 3, 4);
+        function test(fx: number, fy: number, sx: number, sy: number): boolean {
+            return (f.fieldPosToScenePos(new Pos(fx, fy)).sub(cc.v2(sx, sy)).len() < 0.01);
+        }
+        let result1 = test(1,1,  0,0);
+        let result2 = test(0,0,  -tileWidth,tileHeight);
+        return result1 && result2;
+    }});
+    testList.push({name: "Position convert #2", func: () => {
+        let f = new M2S_PlayField(3, 3, 4);
+        function test(sx: number, sy: number, fx: number, fy: number): boolean {
+            return f.scenePosToFieldPos(cc.v2(sx, sy)).equal(fx, fy);
+        }
+        let result1 = test(0, 0,   1,1);
+        let result2 = test(0.25*tileWidth, 0.25*tileHeight,  1,1);
+        let result3 = test(-0.25*tileWidth, -0.25*tileHeight,  1,1);
+        let result4 = test(-tileWidth, tileHeight,  0,0);
+        return result1 && result2 && result3 && result4;
     }});
 
     let fail = false;
