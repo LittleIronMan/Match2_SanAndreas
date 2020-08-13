@@ -79,8 +79,19 @@ export default class M2S_SceneGameplay extends cc.Component {
             return;
         }
         this.fieldPlace.addChild(this.playField.node);
+        // заполняем поле фишками
         this.playField.tilesPrefabs = this.tilesSprites;
         this.playField.randomInit();
+        // корректируем размер поля
+        let w = this.fieldPlace.width = N * tileWidth + 80;
+        let h = this.fieldPlace.height = M * tileHieght + 88;
+        const fieldPadding = 100;
+        let maxW = this.fieldPlace.parent.width - fieldPadding;
+        let maxH = this.fieldPlace.parent.height - fieldPadding;
+        let scaleW = 1, scaleH = 1;
+        if (w > maxW) { scaleW = maxW / w; }
+        if (h > maxH) { scaleH = maxH / h; }
+        this.fieldPlace.scale = Math.min(scaleW, scaleH);
     }
     update(dt: number) {
         this.playField.moveTiles(dt);
