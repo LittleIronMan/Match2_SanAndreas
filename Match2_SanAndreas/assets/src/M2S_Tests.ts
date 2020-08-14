@@ -41,43 +41,43 @@ export function testAll(): boolean {
     testList.push({name: "Strike #1", func: () => {
         let f = new M2S_BasePlayField(3, 3, 4);
         f.initWith([
-            [3,3,1],
-            [4,2,1],
-            [4,2,3]
+            [ 3, 3, 1],
+            [ 4, 2, 1],
+            [ 4, 2, 3]
         ]);
         f.strikeTo(1, 1);
         return f.equals([
-            [3,3,1],
-            [4,0,1],
-            [4,0,3]
+            [ 3, 3, 1],
+            [ 4, 0, 1],
+            [ 4, 0, 3]
         ]);
     }});
     testList.push({name: "Move #1", func: () => {
         let f = new M2S_BasePlayField(3, 3, 4);
         f.initWith([
-            [3,3,1],
-            [4,2,1],
-            [0,0,0]
+            [ 3, 3, 1],
+            [ 4, 2, 1],
+            [ 0, 0, 0]
         ]);
         f.oneMoveDownTiles();
         return f.equals([
-            [0,0,0],
-            [3,3,1],
-            [4,2,1]
+            [-1,-1,-1],
+            [ 3, 3, 1],
+            [ 4, 2, 1]
         ]);
     }});
     testList.push({name: "Move #2", func: () => {
         let f = new M2S_BasePlayField(3, 3, 4);
         f.initWith([
-            [3,3,1],
-            [4,2,1],
-            [1,0,0]
+            [ 3, 3, 1],
+            [ 4, 2, 1],
+            [ 1, 0, 0]
         ]);
         f.oneMoveDownTiles();
         return f.equals([
-            [3,0,0],
-            [4,3,1],
-            [1,2,1]
+            [ 3,-1,-1],
+            [ 4, 3, 1],
+            [ 1, 2, 1]
         ]);
     }});
     testList.push({name: "Position convert #1", func: () => {

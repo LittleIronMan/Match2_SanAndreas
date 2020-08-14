@@ -10,6 +10,7 @@ export const tileHeight = 192;
 
 export class M2S_Tile extends M2S_BaseTile {
     node: cc.Node;
+    isDropped = false; /** фишка только что выпала с неба, еще появляется */
     constructor(color: number) {
         super(color);
         this.node = null as any; // чтобы компилятор не ругался, после вызова фукнции createTile - поле node никогда не будет null
@@ -60,11 +61,26 @@ export class M2S_PlayField extends M2S_BasePlayField {
     /** Перегруженная функция установки тайла на поле,
      *  также обновляет "реальную" позицию тайла на сцене
      */
-    setTileOnField(tile: M2S_Tile | null, x: number, y: number, onInit=false) {
+    setTileOnField(tile: M2S_Tile | null, x: number, y: number, onInit=false, onDrop=false) {
         this._setTileOnField(tile, x, y);
-        if (onInit && tile) {
-            // при инициализации массива тайлов - устанавливаем их на сцене на конечные позиции
-            tile.node.setPosition(this.fieldPosToScenePos(tile.pos));
+        if (tile) {
+            if (onInit || onDrop) {
+                // при инициализации массива тайлов, или при рождении новых тайлов -
+                // устанавливаем их ноды на сцене
+                let pos = this.fieldPosToScenePos(tile.pos);
+                if (onDrop) {
+                    let downTile = this.field[x][1] as M2S_Tile;
+                    if (downTile && downTile.isDropped) {
+                        pos.y = downTile.node.y + tileHeight;
+                    }
+                    else {
+                        pos.y += tileHeight;
+                    }
+                    tile.isDropped = true;
+                    tile.node.opacity = 0;
+                }
+                tile.node.setPosition(pos);
+            }
         }
         else {
 
@@ -74,10 +90,10 @@ export class M2S_PlayField extends M2S_BasePlayField {
     fieldPosToScenePos(fieldPos: Pos): cc.Vec2 {
         let hash = fieldPos.x * 100 + fieldPos.y;
         let cache = this._mem1[hash];
-        if (cache) { return cache; }
+        if (cache) { return cache.clone(); }
         let pos = cc.v2((fieldPos.x - 0.5 * (this.width - 1)) * tileWidth, (0.5 * (this.height - 1) - fieldPos.y) * tileHeight);
         this._mem1[hash] = pos;
-        return pos;
+        return pos.clone();
     }
     private _mem1: {[hash: number]: cc.Vec2} = {}
 
@@ -96,6 +112,8 @@ export class M2S_PlayField extends M2S_BasePlayField {
         return tile;
     }
     moveTiles(dt: number) {
+        let topTileY = this.fieldPosToScenePos(new Pos(0, 0)).y;
+
         this.tilesFallDetected = false;
         for (let x = 0; x < this.width; x++) {
             let column = this.columns[x];
@@ -123,6 +141,10 @@ export class M2S_PlayField extends M2S_BasePlayField {
                         nextTilePos = targetPos;
                         // #todo анимация остановки тайла
                         this.needCheckTilesFall = true;
+                        if (tile.isDropped) {
+                            tile.isDropped = false;
+                            tile.node.opacity = 255;
+                        }
                     }
                     else {
                         nextTilePos = cc.v2(realPos.x, nextY);
@@ -131,6 +153,16 @@ export class M2S_PlayField extends M2S_BasePlayField {
                         let nextNextY = nextY - (column.getSpeed(dt) * dt);
                         if (nextNextY <= targetPos.y) {
                             this.needCheckTilesFall = true;
+                        }
+                        if (tile.isDropped) {
+                            // обновляем величину прозрачности для новорожденных тайлов
+                            if (realPos.y <= topTileY) {
+                                tile.isDropped = false;
+                                tile.node.opacity = 255;
+                            }
+                            if ((realPos.y > topTileY) && (realPos.y < (topTileY + tileHeight))) {
+                                tile.node.opacity = (1 - (realPos.y - topTileY) / tileHeight) * 255;
+                            }
                         }
                     }
                     tile.node.setPosition(nextTilePos);

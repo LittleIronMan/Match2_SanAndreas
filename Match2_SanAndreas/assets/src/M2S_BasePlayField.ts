@@ -42,6 +42,9 @@ export class M2S_BasePlayField {
      */
     field: (M2S_BaseTile | null)[][];
 
+    /** Массив предустановленных тайлов, выпадающих сверху*/
+    dropDownTiles: number[][];
+
     /** Дополнительный массив, соразмерный с полем, используется для промежуточных вычислений */
     private fieldMask: number[][];
 
@@ -51,9 +54,11 @@ export class M2S_BasePlayField {
         this.countColors = countColors;
         this.field = Array(width);
         this.fieldMask = Array(width);
+        this.dropDownTiles = Array(width);
         for (let x = 0; x < width; x++) {
             this.field[x] = Array(height);
             this.fieldMask[x] = Array(height);
+            this.dropDownTiles[x] = [];
             for (let y = 0; y < height; y++) {
                 this.field[x][y] = null;
                 this.fieldMask[x][y] = 0;
@@ -87,7 +92,7 @@ export class M2S_BasePlayField {
         }
     }
     /** Ставит(переставляет) тайл на поле, обновляя соответствующие переменные */
-    setTileOnField(tile: M2S_BaseTile | null, x: number, y: number, onInit=false) {
+    setTileOnField(tile: M2S_BaseTile | null, x: number, y: number, onInit=false, onDrop=false) {
         this._setTileOnField(tile, x, y);
     }
 
@@ -108,19 +113,26 @@ export class M2S_BasePlayField {
             }
         }
     }
-    /** (Для тестов) Сравнивает цвета тайлов на поле с соответствующими числами массива */
+    /** (Для тестов) Сравнивает цвета тайлов на поле с соответствующими числами массива
+     *  если число равно 0 - подразумевается пустая клетка, если -1 - значит не сравниваем
+     */
     equals(arr: number[][]) {
         let mismatchFound = false;
         for (let x = 0; x < this.width; x++) {
             for (let y = 0; y < this.height; y++) {
+                let testValue = arr[y][x];
+                if (testValue === -1) {
+                    // игнорируем цвет тайла, если testValue == -1
+                    continue;
+                }
                 let tile = this.field[x][y];
                 if (!tile) {
-                    if (arr[y][x] !== 0) {
+                    if (testValue !== 0) {
                         mismatchFound = true; break;
                     }
                     continue;
                 }
-                if (tile.color !== arr[y][x]) {
+                if (tile.color !== testValue) {
                     mismatchFound = true; break;
                 }
             }
@@ -130,11 +142,14 @@ export class M2S_BasePlayField {
         }
         return !mismatchFound;
     }
+    getRandomColor(): number {
+        return Math.floor(Math.random() * this.countColors) + 1;
+    }
     /** Инициализация поля случайным образом */
     randomInit() {
         for (let x = 0; x < this.width; x++) {
             for (let y = 0; y < this.height; y++) {
-                let color = Math.floor(Math.random() * this.countColors) + 1;
+                let color = this.getRandomColor();
                 let newTile = this.createTile(color);
                 this.setTileOnField(newTile, x, y, true);
             }
@@ -159,6 +174,22 @@ export class M2S_BasePlayField {
                 this.setTileOnField(tile, x, y + 1);
                 hasDownMove = true;
             }
+        }
+        // рождаем новые тайлы, если в этом есть необходимость
+        for (let x = 0; x < this.width; x++) {
+            let tile = this.field[x][0];
+            if (tile) {
+                continue;
+            }
+            let color: number;
+            if (this.dropDownTiles[x].length > 0) {
+                color = this.dropDownTiles[x].pop() as number; 
+            }
+            else {
+                color = this.getRandomColor();
+            }
+            let newTile = this.createTile(color);
+            this.setTileOnField(newTile, x, 0, false, true);
         }
         return hasDownMove;
     }
