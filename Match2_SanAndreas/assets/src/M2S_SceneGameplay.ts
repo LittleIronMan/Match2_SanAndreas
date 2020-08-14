@@ -10,8 +10,8 @@ export const tileHeight = 192;
 
 export class M2S_Tile extends M2S_BaseTile {
     node: cc.Node;
-    constructor(x: number, y: number, color: number) {
-        super(x, y, color);
+    constructor(color: number) {
+        super(color);
         this.node = null as any; // чтобы компилятор не ругался, после вызова фукнции createTile - поле node никогда не будет null
     }
 }
@@ -51,8 +51,8 @@ export class M2S_PlayField extends M2S_BasePlayField {
         }
     }
     /** Перегруженная фабрика, для создания "реальных" тайлов. */
-    createTile(x: number, y: number, color: number): M2S_BaseTile {
-        let newTile = new M2S_Tile(x, y, color);
+    createTile(color: number): M2S_BaseTile {
+        let newTile = new M2S_Tile(color);
         newTile.node = cc.instantiate(this.tilesPrefabs[color - 1]);
         this.node.addChild(newTile.node);
         return newTile;

@@ -20,8 +20,8 @@ export class M2S_BaseTile {
     pos: Pos;
     color: number;
     onField = false; // находится ли тайл сейчас на игровом поле
-    constructor(x: number, y: number, color: number) {
-        this.pos = new Pos(x, y);
+    constructor(color: number) {
+        this.pos = new Pos(-1, -1);
         this.color = color;
     }
 }
@@ -64,8 +64,8 @@ export class M2S_BasePlayField {
     /** Функция создания нового тайла на поле,
      *  Может быть перегружена в классах-наследниках
      */
-    createTile(x: number, y: number, color: number): M2S_BaseTile {
-        let newTile = new M2S_BaseTile(x, y, color);
+    createTile(color: number): M2S_BaseTile {
+        let newTile = new M2S_BaseTile(color);
         return newTile;
     }
 
@@ -102,7 +102,7 @@ export class M2S_BasePlayField {
             for (let y = 0; y < this.height; y++) {
                 let color = arr[y][x];
                 if (color > 0) {
-                    let newTile = this.createTile(x, y, color);
+                    let newTile = this.createTile(color);
                     this.setTileOnField(newTile, x, y, true);
                 }
             }
@@ -135,7 +135,7 @@ export class M2S_BasePlayField {
         for (let x = 0; x < this.width; x++) {
             for (let y = 0; y < this.height; y++) {
                 let color = Math.floor(Math.random() * this.countColors) + 1;
-                let newTile = this.createTile(x, y, color);
+                let newTile = this.createTile(color);
                 this.setTileOnField(newTile, x, y, true);
             }
         }
