@@ -1,0 +1,36 @@
+{
+  "ver": "2.3.4",
+  "uuid": "d49e7278-2966-4d2e-b44c-b223cba68159",
+  "type": "sprite",
+  "wrapMode": "clamp",
+  "filterMode": "bilinear",
+  "premultiplyAlpha": false,
+  "genMipmaps": false,
+  "packable": true,
+  "width": 300,
+  "height": 300,
+  "platformSettings": {},
+  "subMetas": {
+    "vagos2": {
+      "ver": "1.0.4",
+      "uuid": "22264bbd-eb5b-4e64-9206-ea2cc3289b16",
+      "rawTextureUuid": "d49e7278-2966-4d2e-b44c-b223cba68159",
+      "trimType": "custom",
+      "trimThreshold": 1,
+      "rotated": false,
+      "offsetX": 0,
+      "offsetY": 0,
+      "trimX": 0,
+      "trimY": 0,
+      "width": 300,
+      "height": 300,
+      "rawWidth": 300,
+      "rawHeight": 300,
+      "borderTop": 0,
+      "borderBottom": 0,
+      "borderLeft": 0,
+      "borderRight": 0,
+      "subMetas": {}
+    }
+  }
+}

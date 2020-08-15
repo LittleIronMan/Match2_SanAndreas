@@ -1,12 +1,22 @@
 import { testAll } from "./M2S_Tests";
 import { M2S_BasePlayField, M2S_BaseTile, Pos } from "./M2S_BasePlayField";
 
-const N = 9;
-const M = 9;
+const N = 8;
+const M = 8;
 const C = 5;
 
 export const tileWidth = 171;
 export const tileHeight = 192;
+
+const gangsConfig: {name: string, avatars: number, color: string}[] = [
+    { name: "aztecas", avatars: 3, color: "#28F3EB" },
+    { name: "ballas", avatars: 4, color: "#780088" },
+    { name: "grove", avatars: 4, color: "#3DD166" },
+    { name: "police", avatars: 5, color: "#4148FD" },
+    { name: "rifa", avatars: 4, color: "#527881" },
+    { name: "triads", avatars: 3, color: "#080808" },
+    { name: "vagos", avatars: 3, color: "#FFF153" },
+];
 
 export class M2S_Tile extends M2S_BaseTile {
     node: cc.Node;
@@ -35,7 +45,7 @@ class ColumnInfo {
 
 export class M2S_PlayField extends M2S_BasePlayField {
     node: cc.Node;
-    tilesPrefabs: cc.Node[] = [];
+    tilesPrefab: cc.Node = null as any;
     columns: ColumnInfo[] = []; // массив с информацией о двигающихся столбцах с тайлами
     needCheckTilesFall = false; // флаг того, что необходимо пересчитать дискретные позиции тайлов
     tilesFallDetected = false; // флаг того, что тайлы на поле в данный момент двигаются
@@ -54,7 +64,19 @@ export class M2S_PlayField extends M2S_BasePlayField {
     /** Перегруженная фабрика, для создания "реальных" тайлов. */
     createTile(color: number): M2S_BaseTile {
         let newTile = new M2S_Tile(color);
-        newTile.node = cc.instantiate(this.tilesPrefabs[color - 1]);
+
+        let n = cc.instantiate(this.tilesPrefab);
+        let avatar = n.getChildByName("avatar").getComponent(cc.Sprite);
+        let frame = n.getChildByName("frame");
+        let glass = n.getChildByName("glass");
+        let gConf = gangsConfig[color];
+        let fileName = "gangs/" + gConf.name
+            + (Math.floor(Math.random() * gConf.avatars) + 1) + ".png";
+        frame.color = cc.color().fromHEX(gConf.color);
+        glass.color = cc.color().fromHEX(gConf.color);
+        avatar.spriteFrame = cc.loader.getRes(fileName, cc.SpriteFrame);
+
+        newTile.node = n;
         this.node.addChild(newTile.node);
         return newTile;
     }
@@ -191,7 +213,8 @@ export default class M2S_SceneGameplay extends cc.Component {
     fieldPlace: cc.Node = null as any; // чтобы компилятор не ругался
 
     @property(cc.Node)
-    tilesSprites: cc.Node[] = [];
+    tilesPrefab: cc.Node = null as any;
+    initCompleted = false;
 
     touchStartTile: M2S_Tile | null = null;
 
@@ -207,13 +230,20 @@ export default class M2S_SceneGameplay extends cc.Component {
             console.log("Не установлен fieldPlace!");
             return;
         }
-        if (this.tilesSprites.length < C) {
-            console.log(`Определено ${this.tilesSprites.length} тайлов, а нужно ${C}!`);
+        if (!this.tilesPrefab) {
+            console.log("Не установлен tilesPrefab!");
             return;
         }
+        new Promise((resolve, reject) => {
+            cc.loader.loadResDir('gangs', cc.SpriteFrame, function (err: Error, frames: cc.SpriteFrame[]) {
+                resolve();
+            });
+        })
+        .then(_ => {
+
         this.fieldPlace.addChild(this.playField.node);
         // заполняем поле тайлами
-        this.playField.tilesPrefabs = this.tilesSprites;
+        this.playField.tilesPrefab = this.tilesPrefab;
         this.playField.randomInit();
         // корректируем размер поля
         let w = this.fieldPlace.width = N * tileWidth + 80;
@@ -277,8 +307,14 @@ export default class M2S_SceneGameplay extends cc.Component {
             }
             this.touchStartTile = null;
         });
+
+        this.initCompleted = true;
+        });
     }
     update(dt: number) {
+        if (!this.initCompleted) {
+            return;
+        }
         this.playField.moveTiles(dt);
     }
 }
