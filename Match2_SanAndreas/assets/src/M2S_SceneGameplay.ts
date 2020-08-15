@@ -9,13 +9,13 @@ export const tileWidth = 171;
 export const tileHeight = 192;
 
 const gangsConfig: {name: string, avatars: number, color: string}[] = [
-    { name: "aztecas", avatars: 3, color: "#28F3EB" },
     { name: "ballas", avatars: 4, color: "#780088" },
     { name: "grove", avatars: 4, color: "#3DD166" },
     { name: "police", avatars: 5, color: "#4148FD" },
-    { name: "rifa", avatars: 4, color: "#527881" },
-    { name: "triads", avatars: 3, color: "#080808" },
     { name: "vagos", avatars: 3, color: "#FFF153" },
+    { name: "triads", avatars: 3, color: "#080808" },
+    { name: "aztecas", avatars: 3, color: "#28F3EB" },
+    { name: "rifa", avatars: 4, color: "#527881" },
 ];
 
 export class M2S_Tile extends M2S_BaseTile {
@@ -69,7 +69,7 @@ export class M2S_PlayField extends M2S_BasePlayField {
         let avatar = n.getChildByName("avatar").getComponent(cc.Sprite);
         let frame = n.getChildByName("frame");
         let glass = n.getChildByName("glass");
-        let gConf = gangsConfig[color];
+        let gConf = gangsConfig[color - 1];
         let fileName = "gangs/" + gConf.name
             + (Math.floor(Math.random() * gConf.avatars) + 1) + ".png";
         frame.color = cc.color().fromHEX(gConf.color);
