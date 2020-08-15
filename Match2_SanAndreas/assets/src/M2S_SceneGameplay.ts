@@ -356,9 +356,11 @@ export default class M2S_SceneGameplay extends cc.Component {
         })
         if (fail) { return; }
 
-        let clip = this.missionPassedClip = cc.loader.getRes("mission_passed.mp3", cc.AudioClip);
-        if (!clip) {
-            cc.loader.loadRes("mission_passed.mp3", cc.AudioClip);
+        this.missionPassedClip = cc.loader.getRes("mission_passed", cc.AudioClip);
+        if (!this.missionPassedClip) {
+            cc.loader.loadRes("mission_passed", cc.AudioClip, (error: Error, data: cc.AudioClip) => {
+                this.missionPassedClip = data;
+            });
         }
 
         this.updateGameplayUI(true);
