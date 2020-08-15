@@ -271,11 +271,11 @@ export default class M2S_SceneGameplay extends cc.Component {
         this.userParams.points += newPoints;
         this.userParams.turns++;
         this.updateGameplayUI();
-        if (this.getTurnsLeft() <= 0) {
-            this.finishLevel(false);
-        }
-        else if (this.getUserGoalProgress() === 1) {
+        if (this.getUserGoalProgress() === 1) {
             this.finishLevel(true);
+        }
+        else if (this.getTurnsLeft() <= 0) {
+            this.finishLevel(false);
         }
     }
     updateGameplayUI(onInit=false) {
