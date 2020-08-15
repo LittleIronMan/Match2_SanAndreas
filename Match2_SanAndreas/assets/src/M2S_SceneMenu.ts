@@ -1,3 +1,5 @@
+import g from "./M2S_FirstClickDetector";
+
 const {ccclass, property} = cc._decorator;
 
 @ccclass
@@ -12,10 +14,8 @@ export default class M2S_SceneMenu extends cc.Component {
     @property({ type: cc.AudioClip })
     clickSound: cc.AudioClip = null as any;
 
-    firstClickDetected = false;
-
     playSound(clip: cc.AudioClip) {
-        if (!this.firstClickDetected) {
+        if (!g.firstClickDetected) {
             return;
         }
         cc.audioEngine.play(clip, false, 0.5);
@@ -31,21 +31,21 @@ export default class M2S_SceneMenu extends cc.Component {
 
     onLoad() {
         let fail = false;
-        const check = (prop: "hoverSound" | "clickSound" | "firstTapDetector") => {
+        const Props = ["hoverSound", "clickSound", "firstTapDetector"] as const;
+        Props.forEach(prop => {
             if (!this[prop]) {
-                console.log(`M2S_SceneMeny.${prop} not defined`);
+                console.log(`M2S_SceneMenu.${prop} not defined`);
                 fail = true;
             }
-        }
-        check("hoverSound");
-        check("clickSound");
-        check("firstTapDetector");
+        })
         if (fail) { return; }
 
-        this.firstTapDetector.active = true;
-        this.firstTapDetector.on(cc.Node.EventType.TOUCH_START, (event: cc.Event.EventTouch) => {
-            this.firstTapDetector.active = false;
-            this.firstClickDetected = true;
-        });
+        this.firstTapDetector.active = !g.firstClickDetected;
+        if (!g.firstClickDetected) {
+            this.firstTapDetector.on(cc.Node.EventType.TOUCH_START, (event: cc.Event.EventTouch) => {
+                this.firstTapDetector.active = false;
+                g.firstClickDetected = true;
+            });
+        }
     }
 }

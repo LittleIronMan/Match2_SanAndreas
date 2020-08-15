@@ -1,5 +1,6 @@
 import { testAll } from "./M2S_Tests";
 import { M2S_BasePlayField, M2S_BaseTile, Pos } from "./M2S_BasePlayField";
+import g from "./M2S_FirstClickDetector";
 
 const N = 8;
 const M = 8;
@@ -220,20 +221,150 @@ export default class M2S_SceneGameplay extends cc.Component {
 
     playField = new M2S_PlayField(N, M, C);
 
+    levelParams = {
+        turnsLimit: 20,
+        goal: 320 * 20, // подразумевается, что каждый ход игрок будет в среднем уничтожать не менее 4-х тайлов
+    };
+    userParams = {
+        points: 0,
+        turns: 0,
+    };
+    getTurnsLeft(): number {
+        return this.levelParams.turnsLimit - this.userParams.turns;
+    }
+    getUserGoalProgress(): number {
+        return Math.min(this.userParams.points / this.levelParams.goal, 1);
+    }
+
+    @property(cc.Node)
+    progressBar: cc.Node = null as any;
+    progressBarTween: cc.Tween | null = null;
+    @property(cc.Label)
+    turnsLeftLabel: cc.Label = null as any;
+    @property(cc.Label)
+    pointsLabel: cc.Label = null as any;
+
+    @property(cc.Node)
+    levelClose: cc.Node = null as any;
+    @property(cc.Node)
+    levelCloseBg: cc.Node = null as any;
+    @property(cc.Node)
+    levelCloseFail: cc.Node = null as any;
+    @property(cc.Node)
+    levelCloseSuccess: cc.Node = null as any;
+    @property(cc.Node)
+    levelCloseTapToContinue: cc.Node = null as any;
+    tapToContinueAction: (() => void) | null = null;
+    missionPassedClip: cc.AudioClip | null = null;
+
+    /** Подсчет количества очков за выбранную юзером группу фишек */
+    getPointsForGroup(group: Pos[]) {
+        let result = 0;
+        let len = group.length;
+        result = len * 50 + (len * len - 4) * 10; 
+        return result;
+    }
+
+    /** Обновление интерфейса сцены после хода юзера */
+    afterUserKillGroup(group: Pos[]) {
+        let newPoints = this.getPointsForGroup(group);
+        this.userParams.points += newPoints;
+        this.userParams.turns++;
+        this.updateGameplayUI();
+        if (this.getTurnsLeft() <= 0) {
+            this.finishLevel(false);
+        }
+        else if (this.getUserGoalProgress() === 1) {
+            this.finishLevel(true);
+        }
+    }
+    updateGameplayUI(onInit=false) {
+        let turnsLeft = this.getTurnsLeft();
+        this.turnsLeftLabel.string = turnsLeft.toString();
+        this.pointsLabel.string = this.userParams.points.toString();
+
+        let goalProgress = this.getUserGoalProgress();
+        const minWidth = 88;
+        if (onInit) {
+            this.progressBar.width = minWidth;
+        }
+        else {
+            const maxWidth = this.progressBar.parent.width;
+            let newWidth = minWidth + (maxWidth - minWidth) * goalProgress;
+            if (this.progressBarTween) {
+                this.progressBarTween.stop();
+            }
+            this.progressBarTween = cc.tween(this.progressBar)
+                .to(0.5, {width: newWidth})
+                .start();
+        }
+    }
+
+    clickOnTile(tile: M2S_Tile) {
+        let group: Pos[] = [];
+        this.playField.findGroup(tile.pos.x, tile.pos.y, tile.color, group);
+        if (group.length >= 2) {
+            let killTiles: Promise<void>[] = [];
+            this.playField.tilesKillDetected = true;
+            group.forEach(pos => {
+                let tile = this.playField.getTileAt(pos.x, pos.y);
+                // сразу освобождаем место на поле
+                this.playField.setTileOnField(null, pos.x, pos.y);
+                // анимация уничтожения тайла
+                killTiles.push(new Promise((resolve, reject) => {
+                    if (tile) {
+                        cc.tween(tile.node)
+                            .to(0.3, {scale: 0.6, angle: 360})
+                            .call(() => resolve())
+                            .removeSelf()
+                            .start();
+                    }
+                }));
+            });
+            // после уничтожения всех тайлов - нужно проверить поле на возможность падений
+            Promise.all(killTiles).then(_ => {
+                this.playField.tilesKillDetected = false;
+                this.playField.needCheckTilesFall = true;
+                this.afterUserKillGroup(group);
+            });
+        }
+    }
+
     onLoad() {
         let testsSuccess = testAll();
         if (!testsSuccess) {
             return;
         }
 
-        if (!this.fieldPlace) {
-            console.log("Не установлен fieldPlace!");
-            return;
+        let fail = false;
+        const Props = ["fieldPlace",
+            "tilesPrefab",
+            "progressBar",
+            "turnsLeftLabel",
+            "pointsLabel",
+            "levelClose",
+            "levelCloseBg",
+            "levelCloseFail",
+            "levelCloseSuccess",
+            "levelCloseTapToContinue"
+        ] as const;
+        Props.forEach(prop => {
+            if (!this[prop]) {
+                console.log(`M2S_SceneGameplay.${prop} not defined`);
+                fail = true;
+            }
+        })
+        if (fail) { return; }
+
+        let clip = this.missionPassedClip = cc.loader.getRes("mission_passed.mp3", cc.AudioClip);
+        if (!clip) {
+            cc.loader.loadRes("mission_passed.mp3", cc.AudioClip);
         }
-        if (!this.tilesPrefab) {
-            console.log("Не установлен tilesPrefab!");
-            return;
-        }
+
+        this.updateGameplayUI(true);
+
+        /** сначала загружаем спрайты бандитов из GTA: San Andreas, и только потом создаем поле */
+        this.fieldPlace.opacity = 0;
         new Promise((resolve, reject) => {
             cc.loader.loadResDir('gangs', cc.SpriteFrame, function (err: Error, frames: cc.SpriteFrame[]) {
                 resolve();
@@ -271,6 +402,9 @@ export default class M2S_SceneGameplay extends cc.Component {
         });
 
         this.fieldPlace.on(cc.Node.EventType.TOUCH_END, (event: cc.Event.EventTouch) => {
+            if (!g.firstClickDetected) {
+                g.firstClickDetected = true;
+            }
             if (this.playField.hasActionsOnField()) {
                 this.touchStartTile = null;
                 return;
@@ -278,37 +412,14 @@ export default class M2S_SceneGameplay extends cc.Component {
             let fieldPos = this.playField.scenePosToFieldPos(event.touch.getLocation());
             let tile = this.playField.getTileAt(fieldPos.x, fieldPos.y);
             if (tile && (tile === this.touchStartTile)) {
-                let group: Pos[] = [];
-                this.playField.findGroup(fieldPos.x, fieldPos.y, tile.color, group);
-                if (group.length >= 2) {
-                    let killTiles: Promise<void>[] = [];
-                    this.playField.tilesKillDetected = true;
-                    group.forEach(pos => {
-                        let tile = this.playField.getTileAt(pos.x, pos.y);
-                        // сразу освобождаем место на поле
-                        this.playField.setTileOnField(null, pos.x, pos.y);
-                        // анимация уничтожения тайла
-                        killTiles.push(new Promise((resolve, reject) => {
-                            if (tile) {
-                                cc.tween(tile.node)
-                                    .to(0.3, {scale: 0.6, angle: 360})
-                                    .call(() => resolve())
-                                    .removeSelf()
-                                    .start();
-                            }
-                        }));
-                    });
-                    // после уничтожения всех тайлов - нужно проверить поле на возможность падений
-                    Promise.all(killTiles).then(_ => {
-                        this.playField.tilesKillDetected = false;
-                        this.playField.needCheckTilesFall = true;
-                    });
-                }
+                this.clickOnTile(tile);
             }
             this.touchStartTile = null;
         });
 
         this.initCompleted = true;
+        cc.tween(this.fieldPlace).to(0.3, {opacity: 255}).start();
+
         });
     }
     update(dt: number) {
@@ -316,5 +427,49 @@ export default class M2S_SceneGameplay extends cc.Component {
             return;
         }
         this.playField.moveTiles(dt);
+    }
+
+    finishLevel(success: boolean) {
+        let label: cc.Node;
+        let hideLabel: cc.Node;
+        if (success) {
+            label = this.levelCloseSuccess;
+            hideLabel = this.levelCloseFail;
+        }
+        else {
+            label = this.levelCloseFail;
+            hideLabel = this.levelCloseSuccess;
+        }
+        hideLabel.active = false;
+
+        label.active = true;
+        label.opacity = 0;
+        this.levelClose.active = true;
+        this.levelCloseBg.opacity = 0;
+        this.levelCloseBg.on(cc.Node.EventType.TOUCH_START, (event: cc.Event.EventTouch) => {
+            if (this.tapToContinueAction) {
+                this.tapToContinueAction();
+            }
+            event.stopPropagation();
+        });
+        let tapTo = this.levelCloseTapToContinue;
+        tapTo.opacity = 0;
+
+        if (success) {
+            if (this.missionPassedClip) {
+                cc.audioEngine.play(this.missionPassedClip, false, 0.5);
+            }
+        }
+        cc.tween(this.levelCloseBg).to(2, {opacity: 255}).start();
+        cc.tween(label).to(0.5, {opacity: 255}).start();
+        cc.tween(tapTo)
+            .delay(1.5)
+            .call(() => {
+                this.tapToContinueAction = () => {
+                    cc.director.loadScene("Menu.fire");
+                };
+            })
+            .to(0.5, {opacity: 255})
+            .start();
     }
 }

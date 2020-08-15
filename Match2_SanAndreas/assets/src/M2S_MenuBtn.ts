@@ -19,15 +19,13 @@ export default class M2S_MenuBtn extends cc.Component {
 
     onLoad() {
         let fail = false;
-        const check = (prop: "area" | "label" | "sceneRef") => {
+        const Props = ["area", "label", "sceneRef"] as const;
+        Props.forEach(prop => {
             if (!this[prop]) {
                 console.log(`M2S_MenuBtn.${prop} not defined`);
                 fail = true;
             }
-        }
-        check("area");
-        check("label");
-        check("sceneRef");
+        })
         if (fail) { return; }
 
         this.area.on('mouseenter', () => {
