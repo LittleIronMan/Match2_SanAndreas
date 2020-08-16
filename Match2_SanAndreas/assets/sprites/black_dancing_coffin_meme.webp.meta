@@ -1,0 +1,36 @@
+{
+  "ver": "2.3.4",
+  "uuid": "94a0931e-491f-41a4-bcc5-b64bc43570b8",
+  "type": "sprite",
+  "wrapMode": "clamp",
+  "filterMode": "bilinear",
+  "premultiplyAlpha": false,
+  "genMipmaps": false,
+  "packable": true,
+  "width": 512,
+  "height": 512,
+  "platformSettings": {},
+  "subMetas": {
+    "black_dancing_coffin_meme": {
+      "ver": "1.0.4",
+      "uuid": "e557a7d9-fe98-4b1d-8e1f-daa12a5b0206",
+      "rawTextureUuid": "94a0931e-491f-41a4-bcc5-b64bc43570b8",
+      "trimType": "custom",
+      "trimThreshold": 1,
+      "rotated": false,
+      "offsetX": 0,
+      "offsetY": 0,
+      "trimX": 0,
+      "trimY": 0,
+      "width": 512,
+      "height": 512,
+      "rawWidth": 512,
+      "rawHeight": 512,
+      "borderTop": 0,
+      "borderBottom": 0,
+      "borderLeft": 0,
+      "borderRight": 0,
+      "subMetas": {}
+    }
+  }
+}

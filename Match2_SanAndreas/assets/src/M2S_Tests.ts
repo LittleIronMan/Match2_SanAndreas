@@ -1,5 +1,6 @@
 import { M2S_BasePlayField, M2S_BaseTile, Pos } from './M2S_BasePlayField';
-import { M2S_PlayField, tileWidth, tileHeight } from './M2S_SceneGameplay';
+import { tileWidth, tileHeight } from './M2S_SceneGameplay';
+import { M2S_PlayField } from './M2S_PlayField';
 
 export function testAll(): boolean {
     let testList: {name: string, func: () => boolean}[] = [];
