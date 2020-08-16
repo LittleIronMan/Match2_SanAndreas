@@ -45,6 +45,8 @@ export default class M2S_SceneGameplay extends cc.Component {
     turnsLeftLabel: cc.Label = null as any;
     @property(cc.Label)
     pointsLabel: cc.Label = null as any;
+    @property(cc.Label)
+    goalValueLabel: cc.Label = null as any;
 
     @property(cc.Node)
     levelClose: cc.Node = null as any;
@@ -88,6 +90,7 @@ export default class M2S_SceneGameplay extends cc.Component {
         const minWidth = 88;
         if (onInit) {
             this.progressBar.width = minWidth;
+            this.goalValueLabel.string = this.levelParams.goal.toString();
         }
         else {
             const maxWidth = this.progressBar.parent.width;
@@ -148,6 +151,7 @@ export default class M2S_SceneGameplay extends cc.Component {
             "progressBar",
             "turnsLeftLabel",
             "pointsLabel",
+            "goalValueLabel",
             "levelClose",
             "levelCloseBg",
             "levelCloseFail",
@@ -273,7 +277,7 @@ export default class M2S_SceneGameplay extends cc.Component {
 
         let clip = cc.loader.getRes(success ? "sounds/mission_passed" : "sounds/fail");
         if (clip) {
-            cc.audioEngine.play(clip, false, 0.5);
+            cc.audioEngine.play(clip, false, 0.3);
         }
         cc.tween(this.levelCloseBg).to(2, {opacity: 255}).start();
         cc.tween(label).to(0.5, {opacity: 255}).start();
@@ -285,6 +289,15 @@ export default class M2S_SceneGameplay extends cc.Component {
                 };
             })
             .to(0.5, {opacity: 255})
+            .call(() => {
+                cc.tween(tapTo)
+                .sequence(
+                    cc.tween().to(0.5, {opacity: 100}, {easing: 'sineInOut'}),
+                    cc.tween().to(0.5, {opacity: 255}, {easing: 'sineOutIn'})
+                )
+                .repeatForever()
+                .start();
+            })
             .start();
     }
 }
