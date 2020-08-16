@@ -1,0 +1,4 @@
+node_modules/
+build/
+server_data/
+simple_ts_server.tar

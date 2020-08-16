@@ -1,0 +1,17 @@
+version: '3'
+
+services:
+    simple_ts_server:
+        #build: .
+        image: littleironman/simple_ts_server
+        container_name: simple_ts_server
+        volumes:
+            - ./server_data:/usr/src/app/build/static
+        command:
+            node build/server.js
+        ports:
+            - 80:3000
+        environment:
+            VIRTUAL_HOST: 'steelnixie.com'
+            LETSENCRYPT_HOST: 'steelnixie.com'
+            LETSENCRYPT_EMAIL: 'mrstark375@gmail.com'
