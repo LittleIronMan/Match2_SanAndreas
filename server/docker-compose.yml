@@ -1,5 +1,10 @@
 version: '3'
 
+networks:
+    default:
+        external:
+            name: network
+
 services:
     simple_ts_server:
         #build: .
@@ -10,7 +15,7 @@ services:
         command:
             node build/server.js
         ports:
-            - 80:3000
+            - 3000:3000
         environment:
             VIRTUAL_HOST: 'steelnixie.com'
             LETSENCRYPT_HOST: 'steelnixie.com'
