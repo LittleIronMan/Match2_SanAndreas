@@ -293,7 +293,7 @@ export default class M2S_SceneGameplay extends cc.Component {
                 cc.tween(tapTo)
                 .sequence(
                     cc.tween().to(0.5, {opacity: 100}, {easing: 'sineInOut'}),
-                    cc.tween().to(0.5, {opacity: 255}, {easing: 'sineOutIn'})
+                    cc.tween().to(0.5, {opacity: 255}, {easing: 'sineInOut'})
                 )
                 .repeatForever()
                 .start();
