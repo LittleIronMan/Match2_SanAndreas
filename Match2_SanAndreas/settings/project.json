@@ -8,7 +8,6 @@
     ]
   ],
   "excluded-modules": [
-    "Animation",
     "Collider",
     "Dynamic Atlas",
     "DragonBones",
@@ -25,7 +24,6 @@
     "ProgressBar",
     "ParticleSystem",
     "RichText",
-    "Slider",
     "ScrollBar",
     "ScrollView",
     "Spine Skeleton",
@@ -62,6 +60,5 @@
     "live": {
       "enable": false
     }
-  },
-  "start-scene": "current"
+  }
 }
