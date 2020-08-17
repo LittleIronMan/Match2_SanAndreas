@@ -1,6 +1,7 @@
 import g from "./M2S_FirstClickDetector";
 import config from "./M2S_Config";
 import M2S_SettingsItem from "./M2S_SettingsItem";
+import cache from "./M2S_Cache";
 
 const {ccclass, property} = cc._decorator;
 
@@ -12,25 +13,14 @@ export default class M2S_SceneMenu extends cc.Component {
     @property(cc.Node)
     firstTapLabel: cc.Node = null as any;
 
-    @property({ type: cc.AudioClip })
-    hoverSound: cc.AudioClip = null as any;
-
-    @property({ type: cc.AudioClip })
-    clickSound: cc.AudioClip = null as any;
-
     @property(cc.Node)
     menuButtons: cc.Node = null as any;
     @property(cc.Node)
     settingsPanel: cc.Node = null as any;
     @property(cc.Node)
     settingsItem: cc.Node = null as any;
-
-    playSound(clip: cc.AudioClip) {
-        if (!g.firstClickDetected) {
-            return;
-        }
-        cc.audioEngine.play(clip, false, 0.5);
-    }
+    @property(cc.Node)
+    loading: cc.Node = null as any;
 
     onClickPlay() {
         console.log("Click PLAY");
@@ -44,7 +34,7 @@ export default class M2S_SceneMenu extends cc.Component {
 
     onLoad() {
         let fail = false;
-        const Props = ["hoverSound", "clickSound", "firstTapDetector", "firstTapLabel", "menuButtons", "settingsPanel", "settingsPanel"] as const;
+        const Props = ["firstTapDetector", "firstTapLabel", "menuButtons", "settingsPanel", "settingsPanel", "loading"] as const;
         Props.forEach(prop => {
             if (!this[prop]) {
                 console.log(`M2S_SceneMenu.${prop} not defined`);
@@ -53,6 +43,7 @@ export default class M2S_SceneMenu extends cc.Component {
         })
         if (fail) { return; }
 
+        this.firstTapLabel.active = !g.firstClickDetected;
         if (!g.firstClickDetected) {
             this.firstTapDetector.on(cc.Node.EventType.TOUCH_START, this.onFirstTap, this);
         }
@@ -77,6 +68,13 @@ export default class M2S_SceneMenu extends cc.Component {
         initConfigItem("M", "высота поля", 2, 20, 0);
         initConfigItem("C", "кол-во цветов", 2, 6, -70);
         initConfigItem("K", "MIN группа", 2, 5, -140);
+
+        this.loading.active = true;
+        this.menuButtons.active = false;
+        cache.loadAll().then(_ => {
+            this.loading.active = false;
+            this.menuButtons.active = true;
+        });
     }
 
     onFirstTap(event: cc.Event.EventTouch) {

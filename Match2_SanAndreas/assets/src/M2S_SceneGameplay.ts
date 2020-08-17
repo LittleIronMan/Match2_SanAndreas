@@ -58,6 +58,10 @@ export default class M2S_SceneGameplay extends cc.Component {
     levelCloseSuccess: cc.Node = null as any;
     @property(cc.Node)
     levelCloseTapToContinue: cc.Node = null as any;
+    @property(cc.Node)
+    pauseMenu: cc.Node = null as any;
+    @property(cc.Node)
+    pauseBg: cc.Node = null as any;
     tapToContinueAction: (() => void) | null = null;
 
     /** Подсчет количества очков за выбранную юзером группу фишек */
@@ -156,7 +160,9 @@ export default class M2S_SceneGameplay extends cc.Component {
             "levelCloseBg",
             "levelCloseFail",
             "levelCloseSuccess",
-            "levelCloseTapToContinue"
+            "levelCloseTapToContinue",
+            "pauseMenu",
+            "pauseBg"
         ] as const;
         Props.forEach(prop => {
             if (!this[prop]) {
@@ -166,29 +172,22 @@ export default class M2S_SceneGameplay extends cc.Component {
         })
         if (fail) { return; }
 
+        this.levelCloseBg.on(cc.Node.EventType.TOUCH_START, (event: cc.Event.EventTouch) => {
+            if (this.tapToContinueAction) {
+                this.tapToContinueAction();
+            }
+            event.stopPropagation();
+        });
+        this.pauseBg.on(cc.Node.EventType.TOUCH_START, (event: cc.Event.EventTouch) => {
+            event.stopPropagation();
+        });
+
         this.updateGameplayUI(true);
 
-        // сначала загружаем спрайты бандитов из GTA: San Andreas
+        // сначала загружаем ресурсы
         this.fieldPlace.opacity = 0;
-        new Promise((resolve, reject) => {
-            if (cache.gangs) {
-                return;
-            }
-            cc.loader.loadResDir('gangs', cc.SpriteFrame, function (err: Error, frames: cc.SpriteFrame[]) {
-                resolve();
-            });
-        })
-        // потом звуки оружия из GTA: San Andreas
-        .then(_ => {
-            if (cache.sounds) {
-                return;
-            }
-            return new Promise((resolve, reject) => {
-                cc.loader.loadResDir('sounds', cc.AudioClip, function (err: Error, frames: cc.SpriteFrame[]) {
-                    resolve();
-                });
-            });
-        })
+
+        cache.loadAll()
         // и только потом создаем поле
         .then(_ => {
 
@@ -266,12 +265,7 @@ export default class M2S_SceneGameplay extends cc.Component {
         label.opacity = 0;
         this.levelClose.active = true;
         this.levelCloseBg.opacity = 0;
-        this.levelCloseBg.on(cc.Node.EventType.TOUCH_START, (event: cc.Event.EventTouch) => {
-            if (this.tapToContinueAction) {
-                this.tapToContinueAction();
-            }
-            event.stopPropagation();
-        });
+
         let tapTo = this.levelCloseTapToContinue;
         tapTo.opacity = 0;
 
@@ -299,5 +293,15 @@ export default class M2S_SceneGameplay extends cc.Component {
                 .start();
             })
             .start();
+    }
+
+    pauseGame() {
+        this.pauseMenu.active = true;
+    }
+    continueGame() {
+        this.pauseMenu.active = false;
+    }
+    exitGame() {
+        cc.director.loadScene("Menu.fire");
     }
 }

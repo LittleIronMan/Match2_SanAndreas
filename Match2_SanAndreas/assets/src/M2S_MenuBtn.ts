@@ -1,4 +1,5 @@
-import M2S_SceneMenu from "./M2S_SceneMenu";
+import g from "./M2S_FirstClickDetector";
+import cache from "./M2S_Cache";
 
 const { ccclass, property } = cc._decorator;
 
@@ -11,15 +12,22 @@ export default class M2S_MenuBtn extends cc.Component {
     @property(cc.Node)
     label: cc.Node = null as any;
 
-    @property(M2S_SceneMenu)
-    sceneRef: M2S_SceneMenu = null as any;
-
     @property([cc.Component.EventHandler])
     events: cc.Component.EventHandler[] = [];
 
+    playSound(sound: string) {
+        if (!g.firstClickDetected || !cache.sounds) {
+            return;
+        }
+        let clip = cc.loader.getRes("sounds/" + sound);
+        if (clip) {
+            cc.audioEngine.play(clip, false, 0.5);
+        }
+    }
+
     onLoad() {
         let fail = false;
-        const Props = ["area", "label", "sceneRef"] as const;
+        const Props = ["area", "label"] as const;
         Props.forEach(prop => {
             if (!this[prop]) {
                 console.log(`M2S_MenuBtn.${prop} not defined`);
@@ -29,7 +37,7 @@ export default class M2S_MenuBtn extends cc.Component {
         if (fail) { return; }
 
         this.area.on('mouseenter', () => {
-            this.sceneRef.playSound(this.sceneRef.hoverSound);
+            this.playSound("hover");
             this.label.color = cc.color(255, 175, 6);
         });
         this.area.on('mouseleave', () => {
@@ -39,7 +47,7 @@ export default class M2S_MenuBtn extends cc.Component {
             this.events.forEach(e => {
                 e.emit([]);
             })
-            this.sceneRef.playSound(this.sceneRef.clickSound);
+            this.playSound("click");
         });
     }
 }
