@@ -36,10 +36,10 @@ export default class M2S_MenuBtn extends cc.Component {
             this.label.color = cc.Color.WHITE;
         });
         this.area.on(cc.Node.EventType.TOUCH_END, (event: cc.Event.EventTouch) => {
-            this.sceneRef.playSound(this.sceneRef.clickSound);
             this.events.forEach(e => {
                 e.emit([]);
             })
+            this.sceneRef.playSound(this.sceneRef.clickSound);
         });
     }
 }
