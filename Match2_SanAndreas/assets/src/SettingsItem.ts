@@ -1,5 +1,8 @@
 const {ccclass, property} = cc._decorator;
 
+const MAX_VALUE_DEFAULT = 10;
+const MIN_VALUE_DEFAULT = 1;
+
 @ccclass
 export default class SettingsItem extends cc.Component {
     @property(cc.Label)
@@ -15,6 +18,6 @@ export default class SettingsItem extends cc.Component {
     desc: cc.Label = null as any;
 
     prop: "N" | "M" | "C" | "K" = null as any;
-    maxValue = 10;
-    minValue = 1;
+    maxValue = MAX_VALUE_DEFAULT;
+    minValue = MIN_VALUE_DEFAULT;
 }

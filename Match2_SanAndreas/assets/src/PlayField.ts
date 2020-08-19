@@ -1,9 +1,13 @@
 import { BasePlayField, BaseTile, Pos } from "./BasePlayField";
-import { tileHeight, tileWidth } from "./SceneGameplay";
+import { TILES_ACCELERATION, TILES_MAX_SPEED, ALPHA_MAX, TILE_HEIGHT, TILE_WIDTH } from "./Constants";
 
 export class Tile extends BaseTile {
+    /** @description ссылка на нод, который рендерит тайл на сцене */
     node: cc.Node;
-    isDropped = false; /** фишка только что выпала с неба, еще появляется */
+
+    /** @description фишка только что выпала с неба, еще появляется */
+    isDropped = false;
+
     constructor(color: number) {
         super(color);
         this.node = null as any; // чтобы компилятор не ругался, после вызова фукнции createTile - поле node никогда не будет null
@@ -11,22 +15,30 @@ export class Tile extends BaseTile {
 }
 
 class ColumnInfo {
+    /** @description Общее время падения столбца */
     fallTime: number = 0;
-    /** Считает скорость движения тайлов в столбце, исходя из общего времени падения fallTime.
-     *  Если передать аргумент futureDt, то эта величина времени прибавляется к fallTime,
-     *  тем самым рассчитывается "будущая" скорость.
+
+    /**
+     * @description Считает скорость движения тайлов в столбце, исходя из общего времени падения fallTime.
+     * @param futureDt {number} Если передать аргумент futureDt,
+     * то эта величина времени прибавляется к fallTime,
+     * тем самым рассчитывается "будущая" скорость.
+     * @returns {number} Cкорость тайлов в столбце
+     * @public
      */
     getSpeed(futureDt=0): number {
-        let speed = 8000 * (this.fallTime + futureDt);
-        speed = Math.min(speed, 2300);
+        let speed = TILES_ACCELERATION * (this.fallTime + futureDt);
+        speed = Math.min(speed, TILES_MAX_SPEED);
         return speed;
     }
-    isMove() {
+
+    /** @description Движется ли тайл, или нет. */
+    isMove(): boolean {
         return this.fallTime > 0;
     }
 }
 
-const gangsConfig: {name: string, avatars: number, color: string}[] = [
+const SAN_ANDREAS_GANGS_CONFIG: {name: string, avatars: number, color: string}[] = [
     { name: "ballas", avatars: 4, color: "#780088" },
     { name: "grove", avatars: 4, color: "#3DD166" },
     { name: "police", avatars: 5, color: "#4148FD" },
@@ -36,6 +48,10 @@ const gangsConfig: {name: string, avatars: number, color: string}[] = [
     { name: "rifa", avatars: 4, color: "#527881" },
 ];
 
+/**
+ * @class
+ * @classdesc Хранит в себе состояние поля фишек
+ */
 export class PlayField extends BasePlayField {
     node: cc.Node;
     tilesPrefab: cc.Node = null as any;
@@ -47,14 +63,25 @@ export class PlayField extends BasePlayField {
         return this.tilesFallDetected || this.tilesKillDetected;
     }
 
-    constructor(width: number, height: number, countColors: number) {
-        super(width, height, countColors);
+    /**
+     * @param width ширина поля(в тайлах, т.е. натуральное число)
+     * @param height высота поля
+     * @param countColors максимальное кол-во различных цветов тайлов на поле
+     */
+    constructor(args: {width: number, height: number, countColors: number}) {
+        super(args);
         this.node = new cc.Node();
-        for (let x = 0; x < width; x++) {
+        for (let x = 0; x < args.width; x++) {
             this.columns.push(new ColumnInfo());
         }
     }
-    /** Перегруженная фабрика, для создания "реальных" тайлов. */
+
+    /**
+     * Перегруженная фабрика, для создания "реальных" тайлов.
+     * @param color {number} Цвет тайла - натуральное число <= C(кол-ву цветов на поле)
+     * @returns Новый объект реального тайла
+     * @public
+     */
     createTile(color: number): BaseTile {
         const newTile = new Tile(color);
 
@@ -62,7 +89,7 @@ export class PlayField extends BasePlayField {
         const avatar = n.getChildByName("avatar").getComponent(cc.Sprite);
         const frame = n.getChildByName("frame");
         const glass = n.getChildByName("glass");
-        const gConf = gangsConfig[color - 1];
+        const gConf = SAN_ANDREAS_GANGS_CONFIG[color - 1];
         const fileName = "gangs/" + gConf.name
             + (Math.floor(Math.random() * gConf.avatars) + 1) + ".png";
         frame.color = cc.color().fromHEX(gConf.color);
@@ -73,8 +100,17 @@ export class PlayField extends BasePlayField {
         this.node.addChild(newTile.node);
         return newTile;
     }
-    /** Перегруженная функция установки тайла на поле,
-     *  также обновляет "реальную" позицию тайла на сцене
+
+    /**
+     * Перегруженная функция установки тайла на поле,
+     * также обновляет "реальную" позицию тайла на сцене
+     * @param tile Тайл(или его отсутствие) для установки на поле
+     * @param x Координата X для установке на поле(натуральное число)
+     * @param y Координата Y
+     * @param onInit Флаг того, что функция применяется при инициализации поля,
+     * это означает что тайл нужно сразу поместить на целевую позицию
+     * @param onDrop Тайл размещается на поле после "выпадения" сверху, например.
+     * Его нужно разместить чуть выше самого верхнего ряда.
      */
     setTileOnField(tile: Tile | null, x: number, y: number, onInit=false, onDrop=false) {
         this._setTileOnField(tile, x, y);
@@ -86,10 +122,10 @@ export class PlayField extends BasePlayField {
                 if (onDrop) {
                     const downTile = this.field[x][1] as Tile;
                     if (downTile && downTile.isDropped) {
-                        pos.y = downTile.node.y + tileHeight;
+                        pos.y = downTile.node.y + TILE_HEIGHT;
                     }
                     else {
-                        pos.y += tileHeight;
+                        pos.y += TILE_HEIGHT;
                     }
                     tile.isDropped = true;
                     tile.node.opacity = 0;
@@ -106,7 +142,7 @@ export class PlayField extends BasePlayField {
         const hash = fieldPos.x * 100 + fieldPos.y;
         const cache = this._mem1[hash];
         if (cache) { return cache.clone(); }
-        const pos = cc.v2((fieldPos.x - 0.5 * (this.width - 1)) * tileWidth, (0.5 * (this.height - 1) - fieldPos.y) * tileHeight);
+        const pos = cc.v2((fieldPos.x - 0.5 * (this.width - 1)) * TILE_WIDTH, (0.5 * (this.height - 1) - fieldPos.y) * TILE_HEIGHT);
         this._mem1[hash] = pos;
         return pos.clone();
     }
@@ -114,9 +150,9 @@ export class PlayField extends BasePlayField {
 
     scenePosToFieldPos(scenePos: cc.Vec2): Pos {
         const pos = this.node.convertToNodeSpaceAR(scenePos); // позиция относительно центра поля
-        const centerOffset = cc.v2(this.width * tileWidth, -this.height * tileHeight).mul(0.5);
+        const centerOffset = cc.v2(this.width * TILE_WIDTH, -this.height * TILE_HEIGHT).mul(0.5);
         const topLeftPos = pos.add(centerOffset); // позиция относительно верхнего-левого угла поля
-        const fieldPos = new Pos(Math.floor(topLeftPos.x / tileWidth), Math.floor(-topLeftPos.y / tileHeight));
+        const fieldPos = new Pos(Math.floor(topLeftPos.x / TILE_WIDTH), Math.floor(-topLeftPos.y / TILE_HEIGHT));
         return fieldPos;
     }
     getTileAt(x: number, y: number): Tile | null {
@@ -158,7 +194,7 @@ export class PlayField extends BasePlayField {
                         this.needCheckTilesFall = true;
                         if (tile.isDropped) {
                             tile.isDropped = false;
-                            tile.node.opacity = 255;
+                            tile.node.opacity = ALPHA_MAX;
                         }
                     }
                     else {
@@ -173,10 +209,10 @@ export class PlayField extends BasePlayField {
                             // обновляем величину прозрачности для новорожденных тайлов
                             if (realPos.y <= topTileY) {
                                 tile.isDropped = false;
-                                tile.node.opacity = 255;
+                                tile.node.opacity = ALPHA_MAX;
                             }
-                            if ((realPos.y > topTileY) && (realPos.y < (topTileY + tileHeight))) {
-                                tile.node.opacity = (1 - (realPos.y - topTileY) / tileHeight) * 255;
+                            if ((realPos.y > topTileY) && (realPos.y < (topTileY + TILE_HEIGHT))) {
+                                tile.node.opacity = (1 - (realPos.y - topTileY) / TILE_HEIGHT) * 255;
                             }
                         }
                     }

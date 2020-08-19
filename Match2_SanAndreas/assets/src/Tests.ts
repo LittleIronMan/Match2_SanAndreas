@@ -1,46 +1,67 @@
-import { BasePlayField, BaseTile, Pos } from './BasePlayField';
-import { tileWidth, tileHeight } from './SceneGameplay';
+import { BasePlayField, Pos } from './BasePlayField';
+import { TILE_WIDTH, TILE_HEIGHT, EMPTY_CELL, ANY_COLOR } from './Constants';
 import { PlayField } from './PlayField';
 
+const fieldParams = {width: 3, height: 3, countColors: 4};
+const X = EMPTY_CELL;
+const A = ANY_COLOR;
+
+type EqualsFunc<T> = (val: T, anotherVal: T) => boolean;
+function WithEqualsMethod<T>(equalsFunc?: EqualsFunc<T>) {
+    const _equalsFunc: EqualsFunc<T> =  equalsFunc? equalsFunc : ((a, b) => a === b);
+    class NewClass {
+        val: T;
+        constructor(val: T) {
+            this.val = val;
+        }
+        equals(anotherVal: T) {
+            return _equalsFunc(this.val, anotherVal);
+        }
+        static create(initVal: T): NewClass {
+            return new NewClass(initVal);
+        }
+    }
+    return NewClass;
+}
+
 export function testAll(): boolean {
-    const testList: {name: string, func: () => boolean}[] = [];
+    const testList: {name: string, func: () => boolean[] | boolean}[] = [];
+
     testList.push({name: "Init #1", func: () => {
-        const f = new BasePlayField(3, 3, 4);
+        const f = new BasePlayField(fieldParams);
         f.initWith([
-            [3,3,1],
-            [4,2,1],
-            [0,0,0]
+            [ 3, 3, 1],
+            [ 4, 2, 1],
+            [ X, X, X]
         ]);
-        const checkArr: {pos: Pos, color: number}[] = [];
-        /* Следующая фукнция просто для сокращенной записи условий для проверки всех тайлов */
-        function p (x: number, y: number, color: number) {
-            checkArr.push({pos: new Pos(x, y), color: color});
-        }
-        p(0,0, 3);
-        p(1,0, 3);
-        p(2,0, 1);
-        p(0,1, 4);
-        p(1,1, 2);
-        p(2,1, 1);
-        p(0,2, 0);
-        p(1,2, 0);
-        p(2,2, 0);
-        for (const ch of checkArr) {
-            const tile = f.field[ch.pos.x][ch.pos.y];
+        const TileColor = WithEqualsMethod<number>();
+        function colorOfTile(x: number, y: number): InstanceType<typeof TileColor> {
+            let color: number;
+            let tile = f.field[x][y];
             if (!tile) {
-                if (ch.color !== 0) {
-                    return false;
-                }
-                continue;
+                color = X;
             }
-            if (tile.color !== ch.color) {
-                return false;
+            else {
+                color = tile.color;
             }
+            return new TileColor(color);
         }
-        return true;
+        const results: boolean[] = [];
+        results.push(   colorOfTile(0,0).equals(3)   );
+        results.push(   colorOfTile(1,0).equals(3)   );
+        results.push(   colorOfTile(2,0).equals(1)   );
+        results.push(   colorOfTile(0,1).equals(4)   );
+        results.push(   colorOfTile(1,1).equals(2)   );
+        results.push(   colorOfTile(2,1).equals(1)   );
+        results.push(   colorOfTile(0,2).equals(X)   );
+        results.push(   colorOfTile(1,2).equals(X)   );
+        results.push(   colorOfTile(2,2).equals(X)   );
+
+        return results;
     }});
+
     testList.push({name: "Strike #1", func: () => {
-        const f = new BasePlayField(3, 3, 4);
+        const f = new BasePlayField(fieldParams);
         f.initWith([
             [ 3, 3, 1],
             [ 4, 2, 1],
@@ -49,68 +70,99 @@ export function testAll(): boolean {
         f.strikeTo(1, 1);
         return f.equals([
             [ 3, 3, 1],
-            [ 4, 0, 1],
-            [ 4, 0, 3]
+            [ 4, X, 1],
+            [ 4, X, 3]
         ]);
     }});
+
     testList.push({name: "Move #1", func: () => {
-        const f = new BasePlayField(3, 3, 4);
+        const f = new BasePlayField(fieldParams);
         f.initWith([
             [ 3, 3, 1],
             [ 4, 2, 1],
-            [ 0, 0, 0]
+            [ X, X, X]
         ]);
         f.oneMoveDownTiles();
         return f.equals([
-            [-1,-1,-1],
+            [ A, A, A],
             [ 3, 3, 1],
             [ 4, 2, 1]
         ]);
     }});
+
     testList.push({name: "Move #2", func: () => {
-        const f = new BasePlayField(3, 3, 4);
+        const f = new BasePlayField(fieldParams);
         f.initWith([
             [ 3, 3, 1],
             [ 4, 2, 1],
-            [ 1, 0, 0]
+            [ 1, X, X]
         ]);
         f.oneMoveDownTiles();
         return f.equals([
-            [ 3,-1,-1],
+            [ 3, A, A],
             [ 4, 3, 1],
             [ 1, 2, 1]
         ]);
     }});
+
+    const scenePos = cc.v2;
+    const fieldPos = (x: number, y: number) => new Pos(x, y);
+
     testList.push({name: "Position convert #1", func: () => {
-        const f = new PlayField(3, 3, 4);
-        function test(fx: number, fy: number, sx: number, sy: number): boolean {
-            return (f.fieldPosToScenePos(new Pos(fx, fy)).sub(cc.v2(sx, sy)).len() < 0.01);
+        const f = new PlayField(fieldParams);
+
+        const EPSILON = 0.01;
+        const ScenePos = WithEqualsMethod<cc.Vec2>((selfPos: cc.Vec2, anotherPos: cc.Vec2) => {
+            return cc.Vec2.equals(selfPos, anotherPos, EPSILON);
+        })
+        function convert(fieldPos: Pos): InstanceType<typeof ScenePos> {
+            return new ScenePos(f.fieldPosToScenePos(fieldPos));
         }
-        const result1 = test(1,1,  0,0);
-        const result2 = test(0,0,  -tileWidth,tileHeight);
-        return result1 && result2;
+
+        const results: boolean[] = [];
+        results.push(    convert(fieldPos(1,1)) .equals(scenePos(0,0))   );
+        results.push(    convert(fieldPos(0,0)) .equals(scenePos(-TILE_WIDTH,TILE_HEIGHT))   );
+
+        return results;
     }});
+
     testList.push({name: "Position convert #2", func: () => {
-        const f = new PlayField(3, 3, 4);
-        function test(sx: number, sy: number, fx: number, fy: number): boolean {
-            return f.scenePosToFieldPos(cc.v2(sx, sy)).equal(fx, fy);
+        const f = new PlayField(fieldParams);
+
+        function convert(scenePos: cc.Vec2): Pos {
+            return f.scenePosToFieldPos(scenePos);
         }
-        const result1 = test(0, 0,   1,1);
-        const result2 = test(0.25*tileWidth, 0.25*tileHeight,  1,1);
-        const result3 = test(-0.25*tileWidth, -0.25*tileHeight,  1,1);
-        const result4 = test(-tileWidth, tileHeight,  0,0);
-        return result1 && result2 && result3 && result4;
+
+        const results: boolean[] = [];
+        results.push(   convert(scenePos(0,0)) .equal(fieldPos(1,1))   );
+        results.push(   convert(scenePos(0.25*TILE_WIDTH, 0.25*TILE_HEIGHT)) .equal(fieldPos(1,1))   );
+        results.push(   convert(scenePos(-0.25*TILE_WIDTH, -0.25*TILE_HEIGHT)) .equal(fieldPos(1,1))   );
+        results.push(   convert(scenePos(-TILE_WIDTH, TILE_HEIGHT)) .equal(fieldPos(0,0))   );
+
+        return results;
     }});
 
     let fail = false;
     for (const test of testList) {
-        if (!test.func()) {
+        let result: boolean;
+
+        let funcRes = test.func();
+        if (funcRes instanceof Array) {
+            result = funcRes.reduce((totalRes, localRes) => totalRes && localRes);
+        }
+        else {
+            result = funcRes;
+        }
+
+        if (!result) {
             fail = true;
             console.log(`Test ${test.name} failed!`);
         }
     }
+
     if (!fail) {
         console.log(`All ${testList.length} tests OK!`);
     }
+
     return !fail;
 }

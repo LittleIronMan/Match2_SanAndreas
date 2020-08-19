@@ -1,5 +1,6 @@
 import g from "./FirstClickDetector";
 import cache from "./Cache";
+import { DEFAULT_VOLUME } from "./Constants";
 
 const { ccclass, property } = cc._decorator;
 
@@ -21,7 +22,7 @@ export default class MenuBtn extends cc.Component {
         }
         const clip = cc.loader.getRes("sounds/" + sound);
         if (clip) {
-            cc.audioEngine.play(clip, false, 0.5);
+            cc.audioEngine.play(clip, false, DEFAULT_VOLUME);
         }
     }
 
@@ -38,7 +39,7 @@ export default class MenuBtn extends cc.Component {
 
         this.area.on('mouseenter', () => {
             this.playSound("hover");
-            this.label.color = cc.color(255, 175, 6);
+            this.label.color = MENU_BUTTON_MOUSE_HOVER_COLOR;
         });
         this.area.on('mouseleave', () => {
             this.label.color = cc.Color.WHITE;
@@ -51,3 +52,6 @@ export default class MenuBtn extends cc.Component {
         });
     }
 }
+
+/** Цвет кнопки, выделенной курсором мыши */
+const MENU_BUTTON_MOUSE_HOVER_COLOR = cc.color(255, 175, 6);

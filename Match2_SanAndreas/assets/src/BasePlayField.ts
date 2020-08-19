@@ -1,3 +1,6 @@
+import gameConfig from "./GameConfig";
+import { ANY_COLOR, EMPTY_CELL } from "./Constants";
+
 /** Класс Pos - дискретная позиция тайла на поле */
 export class Pos {
     x = 0;
@@ -6,13 +9,20 @@ export class Pos {
         this.x = x;
         this.y = y;
     }
-    equal(x: number, y: number) {
+    equals(x: number, y: number) {
         return (this.x === x && this.y === y);
+    }
+    equal(anotherPos: Pos) {
+        return (this.x === anotherPos.x && this.y === anotherPos.y);
     }
     constructor(x: number, y: number) {
         this.x = x;
         this.y = y;
     }
+    clone(): Pos {
+        return new Pos(this.x, this.y);
+    }
+    static INVALID_POS = new Pos(-1, -1);
 }
 
 /** Базовый класс для тайлов */
@@ -21,7 +31,7 @@ export class BaseTile {
     color: number;
     onField = false; // находится ли тайл сейчас на игровом поле
     constructor(color: number) {
-        this.pos = new Pos(-1, -1);
+        this.pos = Pos.INVALID_POS.clone();
         this.color = color;
     }
 }
@@ -37,8 +47,9 @@ export class BasePlayField {
     /** Максимальное количество различных цветов тайлов на поле */
     countColors: number;
 
-    /** Массив тайлов(width * height).
-     *  Визуально индексация начинается с верхней-левой ячейки поля.
+    /**
+     * Массив тайлов(width * height).
+     * Визуально индексация начинается с верхней-левой ячейки поля.
      */
     field: (BaseTile | null)[][];
 
@@ -48,7 +59,7 @@ export class BasePlayField {
     /** Дополнительный массив, соразмерный с полем, используется для промежуточных вычислений */
     private fieldMask: number[][];
 
-    constructor(width: number, height: number, countColors: number) {
+    constructor({width, height, countColors}: {width: number, height: number, countColors: number}) {
         this.width = width;
         this.height = height;
         this.countColors = countColors;
@@ -66,8 +77,9 @@ export class BasePlayField {
         }
     }
 
-    /** Функция создания нового тайла на поле,
-     *  Может быть перегружена в классах-наследниках
+    /**
+     * Функция создания нового тайла на поле,
+     * Может быть перегружена в классах-наследниках
      */
     createTile(color: number): BaseTile {
         const newTile = new BaseTile(color);
@@ -75,7 +87,7 @@ export class BasePlayField {
     }
 
     protected _setTileOnField(tile: BaseTile | null, x: number, y: number) {
-        if (tile && tile.onField && !tile.pos.equal(x, y)) {
+        if (tile && tile.onField && !tile.pos.equals(x, y)) {
             // убираем тайл с его старого места
             this.field[tile.pos.x][tile.pos.y] = null;
             const oldTile = this.field[x][y]; // старый тайл на том месте, на которое мы хотим поставить новый тайл
@@ -91,16 +103,18 @@ export class BasePlayField {
             tile.onField = true;
         }
     }
+
     /** Ставит(переставляет) тайл на поле, обновляя соответствующие переменные */
     setTileOnField(tile: BaseTile | null, x: number, y: number, onInit=false, onDrop=false) {
         this._setTileOnField(tile, x, y);
     }
 
-    /** Инициализация поля с помощью предустановленных чисел.
-     *  Каждому числу соответствует цвет тайла, 0 - пустая клетка.
-     *  Обрати внимание, что матрица arr транспонирована относительно field,
-     *  это сделано для удобного задния поля в коде.
-     *  Вероятно, основное применение этой функции - тестирование.
+    /**
+     * Инициализация поля с помощью предустановленных чисел.
+     * Каждому числу соответствует цвет тайла, 0 - пустая клетка.
+     * Обрати внимание, что матрица arr транспонирована относительно field,
+     * это сделано для удобного задния поля в коде.
+     * Вероятно, основное применение этой функции - тестирование.
      */
     initWith(arr: number[][]) {
         for (let x = 0; x < this.width; x++) {
@@ -113,21 +127,22 @@ export class BasePlayField {
             }
         }
     }
-    /** (Для тестов) Сравнивает цвета тайлов на поле с соответствующими числами массива
-     *  если число равно 0 - подразумевается пустая клетка, если -1 - значит не сравниваем
+
+    /**
+     * (Для тестов) Сравнивает цвета тайлов на поле с соответствующими числами массива,
+     * если число равно 0 - подразумевается пустая клетка, если -1 - значит не сравниваем
      */
     equals(arr: number[][]) {
         let mismatchFound = false;
         for (let x = 0; x < this.width; x++) {
             for (let y = 0; y < this.height; y++) {
                 const testValue = arr[y][x];
-                if (testValue === -1) {
-                    // игнорируем цвет тайла, если testValue == -1
+                if (testValue === ANY_COLOR) {
                     continue;
                 }
                 const tile = this.field[x][y];
                 if (!tile) {
-                    if (testValue !== 0) {
+                    if (testValue !== EMPTY_CELL) {
                         mismatchFound = true; break;
                     }
                     continue;
@@ -142,9 +157,11 @@ export class BasePlayField {
         }
         return !mismatchFound;
     }
+
     getRandomColor(): number {
         return Math.floor(Math.random() * this.countColors) + 1;
     }
+
     /** Инициализация поля случайным образом */
     randomInit() {
         for (let x = 0; x < this.width; x++) {
@@ -226,8 +243,9 @@ export class BasePlayField {
         return true;
     }
 
-    /** Для выбранного тайла находится группа смежных с ним тайлов того-же цвета.
-     *  Эта группа уничтожается с поля.
+    /**
+     * Для выбранного тайла находится группа смежных с ним тайлов того-же цвета.
+     * Эта группа уничтожается с поля.
      */
     strikeTo(x: number, y: number) {
         if (!this.isValidPos(x, y)) {
@@ -239,7 +257,7 @@ export class BasePlayField {
         }
         const group: Pos[] = [];
         this.findGroup(x, y, tile.color, group);
-        if (group.length < 2) {
+        if (group.length < gameConfig.K) {
             return;
         }
         // уничтожаем группу тайлов на поле
