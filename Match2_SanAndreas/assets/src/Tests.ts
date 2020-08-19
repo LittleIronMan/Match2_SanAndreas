@@ -73,6 +73,27 @@ export function testAll(): boolean {
         ]);
     }});
 
+    testList.push({name: "Strike #2", func: () => {
+        const f = new BasePlayField({width: 6, height: 6, countColors: 4});
+        f.initWith([
+            [ A, A, 3, 1, 4, A],
+            [ 4, 2, 2, 1, 3, 2],
+            [ 1, 1, 1, 1, 1, 1],
+            [ 1, 4, 1, 2, 4, 1],
+            [ 1, 3, 1, 1, 1, 1],
+            [ 1, 1, 1, 3, 3, 1],
+        ]);
+        f.strikeTo(2, 2);
+        return f.equals([
+            [ A, A, 3, X, 4, A],
+            [ 4, 2, 2, X, 3, 2],
+            [ X, X, X, X, X, X],
+            [ X, 4, X, 2, 4, X],
+            [ X, 3, X, X, X, X],
+            [ X, X, X, 3, 3, X],
+        ]);
+    }});
+
     testList.push({name: "Move #1", func: () => {
         const f = new BasePlayField(fieldParams);
         f.initWith([

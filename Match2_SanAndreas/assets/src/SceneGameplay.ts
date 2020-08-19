@@ -116,8 +116,7 @@ export default class SceneGameplay extends cc.Component {
     }
 
     clickOnTile(tile: Tile) {
-        const group: Pos[] = [];
-        this.playField.findGroup(tile.pos.x, tile.pos.y, tile.color, group);
+        const group = this.playField.findGroup(tile.pos.x, tile.pos.y, tile.color);
         if (group.length >= gameConfig.K) {
             const killTiles: Promise<void>[] = [];
             this.playField.tilesKillDetected = true;

@@ -3,6 +3,8 @@ import { ANY_COLOR, EMPTY_CELL } from "./Constants";
 import BaseTile from "./BaseTile";
 import Pos from "./Pos";
 
+const FOUR_SIDES = [{x: -1, y: 0}, {x: 1, y: 0}, {x: 0, y: -1}, {x: 0, y: 1}];
+
 /** Базовый класс для игрового поля */
 export default class BasePlayField {
     /** Ширина поля(в тайлах) */
@@ -23,23 +25,17 @@ export default class BasePlayField {
     /** Массив предустановленных тайлов, выпадающих сверху*/
     dropDownTiles: number[][];
 
-    /** Дополнительный массив, соразмерный с полем, используется для промежуточных вычислений */
-    private fieldMask: number[][];
-
     constructor({width, height, countColors}: {width: number, height: number, countColors: number}) {
         this.width = width;
         this.height = height;
         this.countColors = countColors;
         this.field = Array(width);
-        this.fieldMask = Array(width);
         this.dropDownTiles = Array(width);
         for (let x = 0; x < width; x++) {
             this.field[x] = Array(height);
-            this.fieldMask[x] = Array(height);
             this.dropDownTiles[x] = [];
             for (let y = 0; y < height; y++) {
                 this.field[x][y] = null;
-                this.fieldMask[x][y] = 0;
             }
         }
     }
@@ -186,28 +182,46 @@ export default class BasePlayField {
     }
 
     /** Возвращает группу смежных тайлов того-же цвета, что и в выбранной ячейке. */
-    findGroup(x: number, y: number, targetColor: number, group: Pos[], isFirstCall=true): boolean {
+    findGroup(x: number, y: number, targetColor: number): Pos[] {
+        const result: Pos[] = [];
+
         if (!this.isValidPos(x, y)) {
-            return false;
+            return result;
         }
-        const tile = this.field[x][y];
-        if (!tile || tile.color != targetColor) {
-            return false;
+
+        /** Дополнительный массив, соразмерный с полем, используется для промежуточных вычислений */
+        const fieldMask: (1 | undefined)[] = Array(this.width * this.height);
+
+        const W = this.width;
+        fieldMask[y*W + x] = 1;
+
+        let groupToCheck = [new Pos(x, y)];
+
+        while (groupToCheck.length > 0) {
+            const nextGroup: Pos[] = [];
+            for (const pos of groupToCheck) {
+                result.push(pos);
+                for (const delta of FOUR_SIDES) {
+                    const newX = pos.x + delta.x;
+                    const newY = pos.y + delta.y;
+                    if (!this.isValidPos(newX, newY)) {
+                        continue;
+                    }
+                    if (fieldMask[newY*W + newX]) {
+                        continue;
+                    }
+                    fieldMask[newY*W + newX] = 1; // делаем метку на поле, что эту ячейку мы уже проверили
+                    const tile = this.field[newX][newY];
+                    if (!tile || (tile.color != targetColor)) {
+                        continue;
+                    }
+                    nextGroup.push(new Pos(newX, newY));
+                }
+            }
+            result.concat(groupToCheck);
+            groupToCheck = nextGroup;
         }
-        if (this.fieldMask[x][y] !== 0) {
-            return false;
-        }
-        group.push(new Pos(x, y));
-        this.fieldMask[x][y] = 1; // делаем метку на поле, что эту ячейку мы уже проверили
-        this.findGroup(x + 1, y, targetColor, group, false); // рекурсивно распространяем поиск во все стороны
-        this.findGroup(x - 1, y, targetColor, group, false);
-        this.findGroup(x, y + 1, targetColor, group, false);
-        this.findGroup(x, y - 1, targetColor, group, false);
-        if (isFirstCall) {
-            // по завершению поиска - убираем метки с поля
-            group.forEach(pos => { this.fieldMask[pos.x][pos.y] = 0; });
-        }
-        return true;
+        return result;
     }
 
     /**
@@ -222,8 +236,7 @@ export default class BasePlayField {
         if (!tile) {
             return;
         }
-        const group: Pos[] = [];
-        this.findGroup(x, y, tile.color, group);
+        const group = this.findGroup(x, y, tile.color);
         if (group.length < gameConfig.K) {
             return;
         }
