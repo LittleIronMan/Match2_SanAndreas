@@ -1,10 +1,10 @@
-import g from "./M2S_FirstClickDetector";
-import cache from "./M2S_Cache";
+import g from "./FirstClickDetector";
+import cache from "./Cache";
 
 const { ccclass, property } = cc._decorator;
 
 @ccclass
-export default class M2S_MenuBtn extends cc.Component {
+export default class MenuBtn extends cc.Component {
 
     @property(cc.Node)
     area: cc.Node = null as any;
@@ -30,7 +30,7 @@ export default class M2S_MenuBtn extends cc.Component {
         const Props = ["area", "label"] as const;
         Props.forEach(prop => {
             if (!this[prop]) {
-                console.log(`M2S_MenuBtn.${prop} not defined`);
+                console.log(`MenuBtn.${prop} not defined`);
                 fail = true;
             }
         })

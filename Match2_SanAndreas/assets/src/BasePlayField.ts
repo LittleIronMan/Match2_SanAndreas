@@ -16,7 +16,7 @@ export class Pos {
 }
 
 /** Базовый класс для тайлов */
-export class M2S_BaseTile {
+export class BaseTile {
     pos: Pos;
     color: number;
     onField = false; // находится ли тайл сейчас на игровом поле
@@ -27,7 +27,7 @@ export class M2S_BaseTile {
 }
 
 /** Базовый класс для игрового поля */
-export class M2S_BasePlayField {
+export class BasePlayField {
     /** Ширина поля(в тайлах) */
     width: number;
 
@@ -40,7 +40,7 @@ export class M2S_BasePlayField {
     /** Массив тайлов(width * height).
      *  Визуально индексация начинается с верхней-левой ячейки поля.
      */
-    field: (M2S_BaseTile | null)[][];
+    field: (BaseTile | null)[][];
 
     /** Массив предустановленных тайлов, выпадающих сверху*/
     dropDownTiles: number[][];
@@ -69,12 +69,12 @@ export class M2S_BasePlayField {
     /** Функция создания нового тайла на поле,
      *  Может быть перегружена в классах-наследниках
      */
-    createTile(color: number): M2S_BaseTile {
-        let newTile = new M2S_BaseTile(color);
+    createTile(color: number): BaseTile {
+        let newTile = new BaseTile(color);
         return newTile;
     }
 
-    protected _setTileOnField(tile: M2S_BaseTile | null, x: number, y: number) {
+    protected _setTileOnField(tile: BaseTile | null, x: number, y: number) {
         if (tile && tile.onField && !tile.pos.equal(x, y)) {
             // убираем тайл с его старого места
             this.field[tile.pos.x][tile.pos.y] = null;
@@ -92,7 +92,7 @@ export class M2S_BasePlayField {
         }
     }
     /** Ставит(переставляет) тайл на поле, обновляя соответствующие переменные */
-    setTileOnField(tile: M2S_BaseTile | null, x: number, y: number, onInit=false, onDrop=false) {
+    setTileOnField(tile: BaseTile | null, x: number, y: number, onInit=false, onDrop=false) {
         this._setTileOnField(tile, x, y);
     }
 

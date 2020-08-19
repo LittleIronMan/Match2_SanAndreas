@@ -1,7 +1,7 @@
 const {ccclass, property} = cc._decorator;
 
 @ccclass
-export default class M2S_SettingsItem extends cc.Component {
+export default class SettingsItem extends cc.Component {
     @property(cc.Label)
     title: cc.Label = null as any;
 

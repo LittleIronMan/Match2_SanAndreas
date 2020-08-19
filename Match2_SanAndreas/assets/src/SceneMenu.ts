@@ -1,12 +1,12 @@
-import g from "./M2S_FirstClickDetector";
-import config from "./M2S_Config";
-import M2S_SettingsItem from "./M2S_SettingsItem";
-import cache from "./M2S_Cache";
+import g from "./FirstClickDetector";
+import config from "./Config";
+import SettingsItem from "./SettingsItem";
+import cache from "./Cache";
 
 const {ccclass, property} = cc._decorator;
 
 @ccclass
-export default class M2S_SceneMenu extends cc.Component {
+export default class SceneMenu extends cc.Component {
     /** Детектит первый клик/тап юзера, после чего можно включать звуки */
     @property(cc.Node)
     firstTapDetector: cc.Node = null as any;
@@ -37,7 +37,7 @@ export default class M2S_SceneMenu extends cc.Component {
         const Props = ["firstTapDetector", "firstTapLabel", "menuButtons", "settingsPanel", "settingsPanel", "loading"] as const;
         Props.forEach(prop => {
             if (!this[prop]) {
-                console.log(`M2S_SceneMenu.${prop} not defined`);
+                console.log(`SceneMenu.${prop} not defined`);
                 fail = true;
             }
         })
@@ -51,7 +51,7 @@ export default class M2S_SceneMenu extends cc.Component {
         const initConfigItem = (prop: "N" | "M" | "C" | "K", desc: string, minValue: number, maxValue: number, yPos: number) => {
             let node = cc.instantiate(this.settingsItem);
             node.active = true;
-            let item = node.getComponent(M2S_SettingsItem);
+            let item = node.getComponent(SettingsItem);
             item.prop = prop;
             item.minValue = minValue;
             item.maxValue = maxValue;
@@ -84,7 +84,7 @@ export default class M2S_SceneMenu extends cc.Component {
     }
 
     onChangeProperty(sender: cc.Slider, eventType: cc.Event) {
-        let item = sender.node.parent.getComponent(M2S_SettingsItem);
+        let item = sender.node.parent.getComponent(SettingsItem);
         let newValue = Math.round(item.minValue + (item.maxValue - item.minValue) * sender.progress);
         config[item.prop] = newValue;
         item.value.string = newValue.toString();

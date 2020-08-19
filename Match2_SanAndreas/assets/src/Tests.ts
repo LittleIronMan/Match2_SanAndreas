@@ -1,11 +1,11 @@
-import { M2S_BasePlayField, M2S_BaseTile, Pos } from './M2S_BasePlayField';
-import { tileWidth, tileHeight } from './M2S_SceneGameplay';
-import { M2S_PlayField } from './M2S_PlayField';
+import { BasePlayField, BaseTile, Pos } from './BasePlayField';
+import { tileWidth, tileHeight } from './SceneGameplay';
+import { PlayField } from './PlayField';
 
 export function testAll(): boolean {
     let testList: {name: string, func: () => boolean}[] = [];
     testList.push({name: "Init #1", func: () => {
-        let f = new M2S_BasePlayField(3, 3, 4);
+        let f = new BasePlayField(3, 3, 4);
         f.initWith([
             [3,3,1],
             [4,2,1],
@@ -40,7 +40,7 @@ export function testAll(): boolean {
         return true;
     }});
     testList.push({name: "Strike #1", func: () => {
-        let f = new M2S_BasePlayField(3, 3, 4);
+        let f = new BasePlayField(3, 3, 4);
         f.initWith([
             [ 3, 3, 1],
             [ 4, 2, 1],
@@ -54,7 +54,7 @@ export function testAll(): boolean {
         ]);
     }});
     testList.push({name: "Move #1", func: () => {
-        let f = new M2S_BasePlayField(3, 3, 4);
+        let f = new BasePlayField(3, 3, 4);
         f.initWith([
             [ 3, 3, 1],
             [ 4, 2, 1],
@@ -68,7 +68,7 @@ export function testAll(): boolean {
         ]);
     }});
     testList.push({name: "Move #2", func: () => {
-        let f = new M2S_BasePlayField(3, 3, 4);
+        let f = new BasePlayField(3, 3, 4);
         f.initWith([
             [ 3, 3, 1],
             [ 4, 2, 1],
@@ -82,7 +82,7 @@ export function testAll(): boolean {
         ]);
     }});
     testList.push({name: "Position convert #1", func: () => {
-        let f = new M2S_PlayField(3, 3, 4);
+        let f = new PlayField(3, 3, 4);
         function test(fx: number, fy: number, sx: number, sy: number): boolean {
             return (f.fieldPosToScenePos(new Pos(fx, fy)).sub(cc.v2(sx, sy)).len() < 0.01);
         }
@@ -91,7 +91,7 @@ export function testAll(): boolean {
         return result1 && result2;
     }});
     testList.push({name: "Position convert #2", func: () => {
-        let f = new M2S_PlayField(3, 3, 4);
+        let f = new PlayField(3, 3, 4);
         function test(sx: number, sy: number, fx: number, fy: number): boolean {
             return f.scenePosToFieldPos(cc.v2(sx, sy)).equal(fx, fy);
         }

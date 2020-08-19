@@ -1,9 +1,9 @@
-import { testAll } from "./M2S_Tests";
-import { M2S_BasePlayField, M2S_BaseTile, Pos } from "./M2S_BasePlayField";
-import g from "./M2S_FirstClickDetector";
-import cache from "./M2S_Cache";
-import { M2S_Tile, M2S_PlayField } from "./M2S_PlayField";
-import config from "./M2S_Config";
+import { testAll } from "./Tests";
+import { BasePlayField, BaseTile, Pos } from "./BasePlayField";
+import g from "./FirstClickDetector";
+import cache from "./Cache";
+import { Tile, PlayField } from "./PlayField";
+import config from "./Config";
 
 export const tileWidth = 171;
 export const tileHeight = 192;
@@ -11,7 +11,7 @@ export const tileHeight = 192;
 const {ccclass, property} = cc._decorator;
 
 @ccclass
-export default class M2S_SceneGameplay extends cc.Component {
+export default class SceneGameplay extends cc.Component {
     @property(cc.Node)
     fieldPlace: cc.Node = null as any; // чтобы компилятор не ругался
 
@@ -19,9 +19,9 @@ export default class M2S_SceneGameplay extends cc.Component {
     tilesPrefab: cc.Node = null as any;
     initCompleted = false;
 
-    touchStartTile: M2S_Tile | null = null;
+    touchStartTile: Tile | null = null;
 
-    playField = new M2S_PlayField(config.N, config.M, config.C);
+    playField = new PlayField(config.N, config.M, config.C);
 
     levelParams = {
         turnsLimit: 20,
@@ -108,7 +108,7 @@ export default class M2S_SceneGameplay extends cc.Component {
         }
     }
 
-    clickOnTile(tile: M2S_Tile) {
+    clickOnTile(tile: Tile) {
         let group: Pos[] = [];
         this.playField.findGroup(tile.pos.x, tile.pos.y, tile.color, group);
         if (group.length >= config.K) {
@@ -166,7 +166,7 @@ export default class M2S_SceneGameplay extends cc.Component {
         ] as const;
         Props.forEach(prop => {
             if (!this[prop]) {
-                console.log(`M2S_SceneGameplay.${prop} not defined`);
+                console.log(`SceneGameplay.${prop} not defined`);
                 fail = true;
             }
         })

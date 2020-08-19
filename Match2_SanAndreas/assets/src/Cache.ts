@@ -1,4 +1,4 @@
-class M2S_Cache {
+class Cache {
     sounds = false;
     gangs = false;
     loadAll(): Promise<void> {
@@ -26,5 +26,5 @@ class M2S_Cache {
         })
     }
 }
-var cache = new M2S_Cache();
+var cache = new Cache();
 export default cache;

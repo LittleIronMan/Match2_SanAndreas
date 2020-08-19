@@ -1,7 +1,7 @@
-import { M2S_BasePlayField, M2S_BaseTile, Pos } from "./M2S_BasePlayField";
-import { tileHeight, tileWidth } from "./M2S_SceneGameplay";
+import { BasePlayField, BaseTile, Pos } from "./BasePlayField";
+import { tileHeight, tileWidth } from "./SceneGameplay";
 
-export class M2S_Tile extends M2S_BaseTile {
+export class Tile extends BaseTile {
     node: cc.Node;
     isDropped = false; /** фишка только что выпала с неба, еще появляется */
     constructor(color: number) {
@@ -36,7 +36,7 @@ const gangsConfig: {name: string, avatars: number, color: string}[] = [
     { name: "rifa", avatars: 4, color: "#527881" },
 ];
 
-export class M2S_PlayField extends M2S_BasePlayField {
+export class PlayField extends BasePlayField {
     node: cc.Node;
     tilesPrefab: cc.Node = null as any;
     columns: ColumnInfo[] = []; // массив с информацией о двигающихся столбцах с тайлами
@@ -55,8 +55,8 @@ export class M2S_PlayField extends M2S_BasePlayField {
         }
     }
     /** Перегруженная фабрика, для создания "реальных" тайлов. */
-    createTile(color: number): M2S_BaseTile {
-        let newTile = new M2S_Tile(color);
+    createTile(color: number): BaseTile {
+        let newTile = new Tile(color);
 
         let n = cc.instantiate(this.tilesPrefab);
         let avatar = n.getChildByName("avatar").getComponent(cc.Sprite);
@@ -76,7 +76,7 @@ export class M2S_PlayField extends M2S_BasePlayField {
     /** Перегруженная функция установки тайла на поле,
      *  также обновляет "реальную" позицию тайла на сцене
      */
-    setTileOnField(tile: M2S_Tile | null, x: number, y: number, onInit=false, onDrop=false) {
+    setTileOnField(tile: Tile | null, x: number, y: number, onInit=false, onDrop=false) {
         this._setTileOnField(tile, x, y);
         if (tile) {
             if (onInit || onDrop) {
@@ -84,7 +84,7 @@ export class M2S_PlayField extends M2S_BasePlayField {
                 // устанавливаем их ноды на сцене
                 let pos = this.fieldPosToScenePos(tile.pos);
                 if (onDrop) {
-                    let downTile = this.field[x][1] as M2S_Tile;
+                    let downTile = this.field[x][1] as Tile;
                     if (downTile && downTile.isDropped) {
                         pos.y = downTile.node.y + tileHeight;
                     }
@@ -119,11 +119,11 @@ export class M2S_PlayField extends M2S_BasePlayField {
         let fieldPos = new Pos(Math.floor(topLeftPos.x / tileWidth), Math.floor(-topLeftPos.y / tileHeight));
         return fieldPos;
     }
-    getTileAt(x: number, y: number): M2S_Tile | null {
+    getTileAt(x: number, y: number): Tile | null {
         if (!this.isValidPos(x, y)) {
             return null;
         }
-        let tile = this.field[x][y] as M2S_Tile;
+        let tile = this.field[x][y] as Tile;
         return tile;
     }
     moveTiles(dt: number) {
@@ -134,7 +134,7 @@ export class M2S_PlayField extends M2S_BasePlayField {
             let column = this.columns[x];
             let columnFallDetected = false;
             for (let y = this.height - 1; y >= 0; y--) {
-                let tile = this.field[x][y] as M2S_Tile;
+                let tile = this.field[x][y] as Tile;
                 if (!tile) {
                     continue;
                 }
