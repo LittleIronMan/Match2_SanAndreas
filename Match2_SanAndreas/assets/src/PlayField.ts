@@ -1,18 +1,9 @@
-import { BasePlayField, BaseTile, Pos } from "./BasePlayField";
+import BasePlayField from "./BasePlayField";
+import Pos from "./Pos";
+import BaseTile from "./BaseTile";
 import { TILES_ACCELERATION, TILES_MAX_SPEED, ALPHA_MAX, TILE_HEIGHT, TILE_WIDTH } from "./Constants";
-
-export class Tile extends BaseTile {
-    /** @description ссылка на нод, который рендерит тайл на сцене */
-    node: cc.Node;
-
-    /** @description фишка только что выпала с неба, еще появляется */
-    isDropped = false;
-
-    constructor(color: number) {
-        super(color);
-        this.node = null as any; // чтобы компилятор не ругался, после вызова фукнции createTile - поле node никогда не будет null
-    }
-}
+import TileRender from "./TileRender";
+import Tile from "./Tile";
 
 class ColumnInfo {
     /** @description Общее время падения столбца */
@@ -52,9 +43,9 @@ const SAN_ANDREAS_GANGS_CONFIG: {name: string, avatars: number, color: string}[]
  * @class
  * @classdesc Хранит в себе состояние поля фишек
  */
-export class PlayField extends BasePlayField {
+export default class PlayField extends BasePlayField {
     node: cc.Node;
-    tilesPrefab: cc.Node = null as any;
+    tilesPrefab: TileRender = null as any;
     columns: ColumnInfo[] = []; // массив с информацией о двигающихся столбцах с тайлами
     needCheckTilesFall = false; // флаг того, что необходимо пересчитать дискретные позиции тайлов
     tilesFallDetected = false; // флаг того, что тайлы на поле в данный момент двигаются
@@ -85,19 +76,16 @@ export class PlayField extends BasePlayField {
     createTile(color: number): BaseTile {
         const newTile = new Tile(color);
 
-        const n = cc.instantiate(this.tilesPrefab);
-        const avatar = n.getChildByName("avatar").getComponent(cc.Sprite);
-        const frame = n.getChildByName("frame");
-        const glass = n.getChildByName("glass");
+        const t = cc.instantiate(this.tilesPrefab.node).getComponent(TileRender);
         const gConf = SAN_ANDREAS_GANGS_CONFIG[color - 1];
         const fileName = "gangs/" + gConf.name
             + (Math.floor(Math.random() * gConf.avatars) + 1) + ".png";
-        frame.color = cc.color().fromHEX(gConf.color);
-        glass.color = cc.color().fromHEX(gConf.color);
-        avatar.spriteFrame = cc.loader.getRes(fileName, cc.SpriteFrame);
+        t.frame.color = cc.color().fromHEX(gConf.color);
+        t.glass.color = cc.color().fromHEX(gConf.color);
+        t.avatar.spriteFrame = cc.loader.getRes(fileName, cc.SpriteFrame);
 
-        newTile.node = n;
-        this.node.addChild(newTile.node);
+        newTile.renderTile = t;
+        this.node.addChild(t.node);
         return newTile;
     }
 
@@ -122,15 +110,15 @@ export class PlayField extends BasePlayField {
                 if (onDrop) {
                     const downTile = this.field[x][1] as Tile;
                     if (downTile && downTile.isDropped) {
-                        pos.y = downTile.node.y + TILE_HEIGHT;
+                        pos.y = downTile.renderTile.node.y + TILE_HEIGHT;
                     }
                     else {
                         pos.y += TILE_HEIGHT;
                     }
                     tile.isDropped = true;
-                    tile.node.opacity = 0;
+                    tile.renderTile.node.opacity = 0;
                 }
-                tile.node.setPosition(pos);
+                tile.renderTile.node.setPosition(pos);
             }
         }
         else {
@@ -174,7 +162,8 @@ export class PlayField extends BasePlayField {
                 if (!tile) {
                     continue;
                 }
-                const realPos = tile.node.getPosition();
+                const tNode = tile.renderTile.node;
+                const realPos = tNode.getPosition();
                 const targetPos = this.fieldPosToScenePos(tile.pos);
                 // тайл движется тогда, когда не равны его целевая и текущая позиции
                 if (!realPos.equals(targetPos)) {
@@ -194,7 +183,7 @@ export class PlayField extends BasePlayField {
                         this.needCheckTilesFall = true;
                         if (tile.isDropped) {
                             tile.isDropped = false;
-                            tile.node.opacity = ALPHA_MAX;
+                            tNode.opacity = ALPHA_MAX;
                         }
                     }
                     else {
@@ -209,14 +198,14 @@ export class PlayField extends BasePlayField {
                             // обновляем величину прозрачности для новорожденных тайлов
                             if (realPos.y <= topTileY) {
                                 tile.isDropped = false;
-                                tile.node.opacity = ALPHA_MAX;
+                                tNode.opacity = ALPHA_MAX;
                             }
                             if ((realPos.y > topTileY) && (realPos.y < (topTileY + TILE_HEIGHT))) {
-                                tile.node.opacity = (1 - (realPos.y - topTileY) / TILE_HEIGHT) * 255;
+                                tNode.opacity = (1 - (realPos.y - topTileY) / TILE_HEIGHT) * 255;
                             }
                         }
                     }
-                    tile.node.setPosition(nextTilePos);
+                    tNode.setPosition(nextTilePos);
                 }
             }
             if (columnFallDetected) {

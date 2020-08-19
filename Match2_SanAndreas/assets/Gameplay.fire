@@ -78,9 +78,6 @@
     "_active": true,
     "_components": [
       {
-        "__id__": 186
-      },
-      {
         "__id__": 187
       },
       {
@@ -88,6 +85,9 @@
       },
       {
         "__id__": 189
+      },
+      {
+        "__id__": 190
       }
     ],
     "_prefab": null,
@@ -177,7 +177,7 @@
       "array": [
         0,
         0,
-        359.4005425705421,
+        356.80246635918877,
         0,
         0,
         0,
@@ -260,10 +260,10 @@
     "_active": true,
     "_components": [
       {
-        "__id__": 184
+        "__id__": 185
       },
       {
-        "__id__": 185
+        "__id__": 186
       }
     ],
     "_prefab": null,
@@ -6137,7 +6137,7 @@
         "__id__": 175
       },
       {
-        "__id__": 182
+        "__id__": 183
       }
     ],
     "_active": false,
@@ -8023,7 +8023,11 @@
       }
     ],
     "_active": true,
-    "_components": [],
+    "_components": [
+      {
+        "__id__": 182
+      }
+    ],
     "_prefab": null,
     "_opacity": 255,
     "_color": {
@@ -8355,6 +8359,25 @@
     "_id": "45ZppPUbJK7pCrRJ2iCdKW"
   },
   {
+    "__type__": "b8874KS/+1GtZnSR+hN6AwD",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 175
+    },
+    "_enabled": true,
+    "avatar": {
+      "__id__": 177
+    },
+    "frame": {
+      "__id__": 178
+    },
+    "glass": {
+      "__id__": 180
+    },
+    "_id": "59SZd+M8lHVodaz6FJzul0"
+  },
+  {
     "__type__": "cc.Node",
     "_name": "points_popup_label",
     "_objFlags": 0,
@@ -8365,7 +8388,7 @@
     "_active": true,
     "_components": [
       {
-        "__id__": 183
+        "__id__": 184
       }
     ],
     "_prefab": null,
@@ -8421,7 +8444,7 @@
     "_name": "",
     "_objFlags": 0,
     "node": {
-      "__id__": 182
+      "__id__": 183
     },
     "_enabled": true,
     "_materials": [
@@ -8565,7 +8588,7 @@
       "__id__": 10
     },
     "tilesPrefab": {
-      "__id__": 175
+      "__id__": 182
     },
     "progressBar": {
       "__id__": 59

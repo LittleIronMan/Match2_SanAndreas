@@ -1,6 +1,7 @@
-import { BasePlayField, Pos } from './BasePlayField';
+import BasePlayField from './BasePlayField';
+import Pos from "./Pos";
 import { TILE_WIDTH, TILE_HEIGHT, EMPTY_CELL, ANY_COLOR } from './Constants';
-import { PlayField } from './PlayField';
+import PlayField from './PlayField';
 
 const fieldParams = {width: 3, height: 3, countColors: 4};
 const X = EMPTY_CELL;

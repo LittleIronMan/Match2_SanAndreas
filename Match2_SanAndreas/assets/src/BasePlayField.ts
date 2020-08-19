@@ -1,43 +1,10 @@
 import gameConfig from "./GameConfig";
 import { ANY_COLOR, EMPTY_CELL } from "./Constants";
-
-/** Класс Pos - дискретная позиция тайла на поле */
-export class Pos {
-    x = 0;
-    y = 0;
-    set(x: number, y: number) {
-        this.x = x;
-        this.y = y;
-    }
-    equals(x: number, y: number) {
-        return (this.x === x && this.y === y);
-    }
-    equal(anotherPos: Pos) {
-        return (this.x === anotherPos.x && this.y === anotherPos.y);
-    }
-    constructor(x: number, y: number) {
-        this.x = x;
-        this.y = y;
-    }
-    clone(): Pos {
-        return new Pos(this.x, this.y);
-    }
-    static INVALID_POS = new Pos(-1, -1);
-}
-
-/** Базовый класс для тайлов */
-export class BaseTile {
-    pos: Pos;
-    color: number;
-    onField = false; // находится ли тайл сейчас на игровом поле
-    constructor(color: number) {
-        this.pos = Pos.INVALID_POS.clone();
-        this.color = color;
-    }
-}
+import BaseTile from "./BaseTile";
+import Pos from "./Pos";
 
 /** Базовый класс для игрового поля */
-export class BasePlayField {
+export default class BasePlayField {
     /** Ширина поля(в тайлах) */
     width: number;
 

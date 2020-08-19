@@ -1,8 +1,10 @@
 import { testAll } from "./Tests";
-import { BasePlayField, BaseTile, Pos } from "./BasePlayField";
+import Pos from "./Pos";
 import g from "./FirstClickDetector";
 import cache from "./Cache";
-import { Tile, PlayField } from "./PlayField";
+import PlayField from "./PlayField";
+import TileRender from "./TileRender";
+import Tile from "./Tile";
 import gameConfig from "./GameConfig";
 import { TILE_WIDTH, TILE_HEIGHT, DEFAULT_VOLUME, ONE_TILE_PRICE, BIG_TILES_GROUP_MULTIPLIER, LEVEL_TURNS_LIMIT, FIELD_HORIZONTAL_PADDING, FIELD_VERTICAL_PADDING, FIELD_EX_CONTAINER_PADDING } from "./Constants";
 
@@ -13,8 +15,8 @@ export default class SceneGameplay extends cc.Component {
     @property(cc.Node)
     fieldPlace: cc.Node = null as any; // чтобы компилятор не ругался
 
-    @property(cc.Node)
-    tilesPrefab: cc.Node = null as any;
+    @property(TileRender)
+    tilesPrefab: TileRender = null as any;
     initCompleted = false;
 
     touchStartTile: Tile | null = null;
@@ -127,7 +129,7 @@ export default class SceneGameplay extends cc.Component {
                 const KILL_TIME = 0.3;
                 killTiles.push(new Promise((resolve, reject) => {
                     if (tile) {
-                        cc.tween(tile.node)
+                        cc.tween(tile.renderTile.node)
                             .to(KILL_TIME, {scale: 0.6, angle: 360})
                             .call(() => resolve())
                             .removeSelf()
