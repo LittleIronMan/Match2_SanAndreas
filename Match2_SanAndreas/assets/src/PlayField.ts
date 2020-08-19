@@ -56,14 +56,14 @@ export class PlayField extends BasePlayField {
     }
     /** Перегруженная фабрика, для создания "реальных" тайлов. */
     createTile(color: number): BaseTile {
-        let newTile = new Tile(color);
+        const newTile = new Tile(color);
 
-        let n = cc.instantiate(this.tilesPrefab);
-        let avatar = n.getChildByName("avatar").getComponent(cc.Sprite);
-        let frame = n.getChildByName("frame");
-        let glass = n.getChildByName("glass");
-        let gConf = gangsConfig[color - 1];
-        let fileName = "gangs/" + gConf.name
+        const n = cc.instantiate(this.tilesPrefab);
+        const avatar = n.getChildByName("avatar").getComponent(cc.Sprite);
+        const frame = n.getChildByName("frame");
+        const glass = n.getChildByName("glass");
+        const gConf = gangsConfig[color - 1];
+        const fileName = "gangs/" + gConf.name
             + (Math.floor(Math.random() * gConf.avatars) + 1) + ".png";
         frame.color = cc.color().fromHEX(gConf.color);
         glass.color = cc.color().fromHEX(gConf.color);
@@ -82,9 +82,9 @@ export class PlayField extends BasePlayField {
             if (onInit || onDrop) {
                 // при инициализации массива тайлов, или при рождении новых тайлов -
                 // устанавливаем их ноды на сцене
-                let pos = this.fieldPosToScenePos(tile.pos);
+                const pos = this.fieldPosToScenePos(tile.pos);
                 if (onDrop) {
-                    let downTile = this.field[x][1] as Tile;
+                    const downTile = this.field[x][1] as Tile;
                     if (downTile && downTile.isDropped) {
                         pos.y = downTile.node.y + tileHeight;
                     }
@@ -103,43 +103,43 @@ export class PlayField extends BasePlayField {
     }
     /** Конвертирует дискретную позицию тайла на поле в "пиксельную" позицию на сцене. Мемоизирована */
     fieldPosToScenePos(fieldPos: Pos): cc.Vec2 {
-        let hash = fieldPos.x * 100 + fieldPos.y;
-        let cache = this._mem1[hash];
+        const hash = fieldPos.x * 100 + fieldPos.y;
+        const cache = this._mem1[hash];
         if (cache) { return cache.clone(); }
-        let pos = cc.v2((fieldPos.x - 0.5 * (this.width - 1)) * tileWidth, (0.5 * (this.height - 1) - fieldPos.y) * tileHeight);
+        const pos = cc.v2((fieldPos.x - 0.5 * (this.width - 1)) * tileWidth, (0.5 * (this.height - 1) - fieldPos.y) * tileHeight);
         this._mem1[hash] = pos;
         return pos.clone();
     }
     private _mem1: {[hash: number]: cc.Vec2} = {}
 
     scenePosToFieldPos(scenePos: cc.Vec2): Pos {
-        let pos = this.node.convertToNodeSpaceAR(scenePos); // позиция относительно центра поля
-        let centerOffset = cc.v2(this.width * tileWidth, -this.height * tileHeight).mul(0.5);
-        let topLeftPos = pos.add(centerOffset); // позиция относительно верхнего-левого угла поля
-        let fieldPos = new Pos(Math.floor(topLeftPos.x / tileWidth), Math.floor(-topLeftPos.y / tileHeight));
+        const pos = this.node.convertToNodeSpaceAR(scenePos); // позиция относительно центра поля
+        const centerOffset = cc.v2(this.width * tileWidth, -this.height * tileHeight).mul(0.5);
+        const topLeftPos = pos.add(centerOffset); // позиция относительно верхнего-левого угла поля
+        const fieldPos = new Pos(Math.floor(topLeftPos.x / tileWidth), Math.floor(-topLeftPos.y / tileHeight));
         return fieldPos;
     }
     getTileAt(x: number, y: number): Tile | null {
         if (!this.isValidPos(x, y)) {
             return null;
         }
-        let tile = this.field[x][y] as Tile;
+        const tile = this.field[x][y] as Tile;
         return tile;
     }
     moveTiles(dt: number) {
-        let topTileY = this.fieldPosToScenePos(new Pos(0, 0)).y;
+        const topTileY = this.fieldPosToScenePos(new Pos(0, 0)).y;
 
         this.tilesFallDetected = false;
         for (let x = 0; x < this.width; x++) {
-            let column = this.columns[x];
+            const column = this.columns[x];
             let columnFallDetected = false;
             for (let y = this.height - 1; y >= 0; y--) {
-                let tile = this.field[x][y] as Tile;
+                const tile = this.field[x][y] as Tile;
                 if (!tile) {
                     continue;
                 }
-                let realPos = tile.node.getPosition();
-                let targetPos = this.fieldPosToScenePos(tile.pos);
+                const realPos = tile.node.getPosition();
+                const targetPos = this.fieldPosToScenePos(tile.pos);
                 // тайл движется тогда, когда не равны его целевая и текущая позиции
                 if (!realPos.equals(targetPos)) {
                     if (!columnFallDetected) {
@@ -151,7 +151,7 @@ export class PlayField extends BasePlayField {
                     // он(тайл) перелетит свою целевую позицию,
                     // то ставим тайл на целевую позицию (т.е. останавливаем его движение).
                     // При этом устанавливаем флаг пересчета дискретных(а значит и целевых) позиций тайлов
-                    let nextY = realPos.y - (column.getSpeed() * dt);
+                    const nextY = realPos.y - (column.getSpeed() * dt);
                     if (nextY <= targetPos.y) {
                         nextTilePos = targetPos;
                         // #todo анимация остановки тайла
@@ -165,7 +165,7 @@ export class PlayField extends BasePlayField {
                         nextTilePos = cc.v2(realPos.x, nextY);
                         // если же в этом фрейме тайл еще НЕ перелетает целевую позицию,
                         // но перелетит её в следующем фрейме - это также значит, что пора пересчитать целевые позиции тайлов
-                        let nextNextY = nextY - (column.getSpeed(dt) * dt);
+                        const nextNextY = nextY - (column.getSpeed(dt) * dt);
                         if (nextNextY <= targetPos.y) {
                             this.needCheckTilesFall = true;
                         }
@@ -192,7 +192,7 @@ export class PlayField extends BasePlayField {
         }
         if (this.needCheckTilesFall) {
             this.needCheckTilesFall = false;
-            let newFalls = this.oneMoveDownTiles();
+            const newFalls = this.oneMoveDownTiles();
             this.tilesFallDetected = this.tilesFallDetected || newFalls;
         }
     }

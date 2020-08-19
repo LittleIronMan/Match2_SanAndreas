@@ -70,7 +70,7 @@ export class BasePlayField {
      *  Может быть перегружена в классах-наследниках
      */
     createTile(color: number): BaseTile {
-        let newTile = new BaseTile(color);
+        const newTile = new BaseTile(color);
         return newTile;
     }
 
@@ -78,7 +78,7 @@ export class BasePlayField {
         if (tile && tile.onField && !tile.pos.equal(x, y)) {
             // убираем тайл с его старого места
             this.field[tile.pos.x][tile.pos.y] = null;
-            let oldTile = this.field[x][y]; // старый тайл на том месте, на которое мы хотим поставить новый тайл
+            const oldTile = this.field[x][y]; // старый тайл на том месте, на которое мы хотим поставить новый тайл
             if (oldTile) {
                 // по-хорошему - такой ситуации не должно быть
                 oldTile.onField = false;
@@ -105,9 +105,9 @@ export class BasePlayField {
     initWith(arr: number[][]) {
         for (let x = 0; x < this.width; x++) {
             for (let y = 0; y < this.height; y++) {
-                let color = arr[y][x];
+                const color = arr[y][x];
                 if (color > 0) {
-                    let newTile = this.createTile(color);
+                    const newTile = this.createTile(color);
                     this.setTileOnField(newTile, x, y, true);
                 }
             }
@@ -120,12 +120,12 @@ export class BasePlayField {
         let mismatchFound = false;
         for (let x = 0; x < this.width; x++) {
             for (let y = 0; y < this.height; y++) {
-                let testValue = arr[y][x];
+                const testValue = arr[y][x];
                 if (testValue === -1) {
                     // игнорируем цвет тайла, если testValue == -1
                     continue;
                 }
-                let tile = this.field[x][y];
+                const tile = this.field[x][y];
                 if (!tile) {
                     if (testValue !== 0) {
                         mismatchFound = true; break;
@@ -149,8 +149,8 @@ export class BasePlayField {
     randomInit() {
         for (let x = 0; x < this.width; x++) {
             for (let y = 0; y < this.height; y++) {
-                let color = this.getRandomColor();
-                let newTile = this.createTile(color);
+                const color = this.getRandomColor();
+                const newTile = this.createTile(color);
                 this.setTileOnField(newTile, x, y, true);
             }
         }
@@ -161,12 +161,12 @@ export class BasePlayField {
         let hasDownMove = false;
         for (let y = this.height - 2; y >= 0; y--) {
             for (let x = 0; x < this.width; x++) {
-                let tile = this.field[x][y];
+                const tile = this.field[x][y];
                 if (!tile) {
                     // тайл не найден в ячейке
                     continue;
                 }
-                let tileDown = this.field[x][y + 1];
+                const tileDown = this.field[x][y + 1];
                 if (tileDown) {
                     // не двигаемся, если под тайлом препятствие
                     continue;
@@ -177,7 +177,7 @@ export class BasePlayField {
         }
         // рождаем новые тайлы, если в этом есть необходимость
         for (let x = 0; x < this.width; x++) {
-            let tile = this.field[x][0];
+            const tile = this.field[x][0];
             if (tile) {
                 continue;
             }
@@ -188,7 +188,7 @@ export class BasePlayField {
             else {
                 color = this.getRandomColor();
             }
-            let newTile = this.createTile(color);
+            const newTile = this.createTile(color);
             this.setTileOnField(newTile, x, 0, false, true);
         }
         return hasDownMove;
@@ -206,7 +206,7 @@ export class BasePlayField {
         if (!this.isValidPos(x, y)) {
             return false;
         }
-        let tile = this.field[x][y];
+        const tile = this.field[x][y];
         if (!tile || tile.color != targetColor) {
             return false;
         }
@@ -233,11 +233,11 @@ export class BasePlayField {
         if (!this.isValidPos(x, y)) {
             return;
         }
-        let tile = this.field[x][y];
+        const tile = this.field[x][y];
         if (!tile) {
             return;
         }
-        let group: Pos[] = [];
+        const group: Pos[] = [];
         this.findGroup(x, y, tile.color, group);
         if (group.length < 2) {
             return;

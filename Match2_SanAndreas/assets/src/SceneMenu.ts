@@ -49,13 +49,13 @@ export default class SceneMenu extends cc.Component {
         }
 
         const initConfigItem = (prop: "N" | "M" | "C" | "K", desc: string, minValue: number, maxValue: number, yPos: number) => {
-            let node = cc.instantiate(this.settingsItem);
+            const node = cc.instantiate(this.settingsItem);
             node.active = true;
-            let item = node.getComponent(SettingsItem);
+            const item = node.getComponent(SettingsItem);
             item.prop = prop;
             item.minValue = minValue;
             item.maxValue = maxValue;
-            let curVal = config[prop];
+            const curVal = config[prop];
             item.slider.progress = (curVal - minValue) / (maxValue - minValue);
             item.title.string = prop + " := ";
             item.value.string = curVal.toString();
@@ -84,8 +84,8 @@ export default class SceneMenu extends cc.Component {
     }
 
     onChangeProperty(sender: cc.Slider, eventType: cc.Event) {
-        let item = sender.node.parent.getComponent(SettingsItem);
-        let newValue = Math.round(item.minValue + (item.maxValue - item.minValue) * sender.progress);
+        const item = sender.node.parent.getComponent(SettingsItem);
+        const newValue = Math.round(item.minValue + (item.maxValue - item.minValue) * sender.progress);
         config[item.prop] = newValue;
         item.value.string = newValue.toString();
     }

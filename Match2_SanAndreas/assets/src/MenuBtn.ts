@@ -19,7 +19,7 @@ export default class MenuBtn extends cc.Component {
         if (!g.firstClickDetected || !cache.sounds) {
             return;
         }
-        let clip = cc.loader.getRes("sounds/" + sound);
+        const clip = cc.loader.getRes("sounds/" + sound);
         if (clip) {
             cc.audioEngine.play(clip, false, 0.5);
         }

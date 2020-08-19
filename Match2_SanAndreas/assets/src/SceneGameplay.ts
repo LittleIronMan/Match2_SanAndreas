@@ -67,14 +67,14 @@ export default class SceneGameplay extends cc.Component {
     /** Подсчет количества очков за выбранную юзером группу фишек */
     getPointsForGroup(group: Pos[]) {
         let result = 0;
-        let len = group.length;
+        const len = group.length;
         result = len * 50 + (len * len - 4) * 10; 
         return result;
     }
 
     /** Обновление интерфейса сцены после хода юзера */
     afterUserKillGroup(group: Pos[]) {
-        let newPoints = this.getPointsForGroup(group);
+        const newPoints = this.getPointsForGroup(group);
         this.userParams.points += newPoints;
         this.userParams.turns++;
         this.updateGameplayUI();
@@ -86,11 +86,11 @@ export default class SceneGameplay extends cc.Component {
         }
     }
     updateGameplayUI(onInit=false) {
-        let turnsLeft = this.getTurnsLeft();
+        const turnsLeft = this.getTurnsLeft();
         this.turnsLeftLabel.string = turnsLeft.toString();
         this.pointsLabel.string = this.userParams.points.toString();
 
-        let goalProgress = this.getUserGoalProgress();
+        const goalProgress = this.getUserGoalProgress();
         const minWidth = 88;
         if (onInit) {
             this.progressBar.width = minWidth;
@@ -98,7 +98,7 @@ export default class SceneGameplay extends cc.Component {
         }
         else {
             const maxWidth = this.progressBar.parent.width;
-            let newWidth = minWidth + (maxWidth - minWidth) * goalProgress;
+            const newWidth = minWidth + (maxWidth - minWidth) * goalProgress;
             if (this.progressBarTween) {
                 this.progressBarTween.stop();
             }
@@ -109,13 +109,13 @@ export default class SceneGameplay extends cc.Component {
     }
 
     clickOnTile(tile: Tile) {
-        let group: Pos[] = [];
+        const group: Pos[] = [];
         this.playField.findGroup(tile.pos.x, tile.pos.y, tile.color, group);
         if (group.length >= config.K) {
-            let killTiles: Promise<void>[] = [];
+            const killTiles: Promise<void>[] = [];
             this.playField.tilesKillDetected = true;
             group.forEach(pos => {
-                let tile = this.playField.getTileAt(pos.x, pos.y);
+                const tile = this.playField.getTileAt(pos.x, pos.y);
                 // сразу освобождаем место на поле
                 this.playField.setTileOnField(null, pos.x, pos.y);
                 // анимация уничтожения тайла
@@ -130,7 +130,7 @@ export default class SceneGameplay extends cc.Component {
                 }));
             });
             // звук уничтожения
-            let clip = cc.loader.getRes("sounds/gun" + ((Math.random() * 5) + 1));
+            const clip = cc.loader.getRes("sounds/gun" + ((Math.random() * 5) + 1));
             if (clip) {
                 cc.audioEngine.play(clip, false, 0.3);
             }
@@ -144,7 +144,7 @@ export default class SceneGameplay extends cc.Component {
     }
 
     onLoad() {
-        let testsSuccess = testAll();
+        const testsSuccess = testAll();
         if (!testsSuccess) {
             return;
         }
@@ -196,11 +196,11 @@ export default class SceneGameplay extends cc.Component {
         this.playField.tilesPrefab = this.tilesPrefab;
         this.playField.randomInit();
         // корректируем размер поля
-        let w = this.fieldPlace.width = config.N * tileWidth + 80;
-        let h = this.fieldPlace.height = config.M * tileHeight + 88;
+        const w = this.fieldPlace.width = config.N * tileWidth + 80;
+        const h = this.fieldPlace.height = config.M * tileHeight + 88;
         const fieldPadding = 100;
-        let maxW = this.fieldPlace.parent.width - fieldPadding;
-        let maxH = this.fieldPlace.parent.height - fieldPadding;
+        const maxW = this.fieldPlace.parent.width - fieldPadding;
+        const maxH = this.fieldPlace.parent.height - fieldPadding;
         let scaleW = 1, scaleH = 1;
         if (w > maxW) { scaleW = maxW / w; }
         if (h > maxH) { scaleH = maxH / h; }
@@ -211,7 +211,7 @@ export default class SceneGameplay extends cc.Component {
             if (this.playField.hasActionsOnField()) {
                 return;
             }
-            let fieldPos = this.playField.scenePosToFieldPos(event.touch.getLocation());
+            const fieldPos = this.playField.scenePosToFieldPos(event.touch.getLocation());
             this.touchStartTile = this.playField.getTileAt(fieldPos.x, fieldPos.y);
     
             //event.stopPropagation();
@@ -228,8 +228,8 @@ export default class SceneGameplay extends cc.Component {
                 this.touchStartTile = null;
                 return;
             }
-            let fieldPos = this.playField.scenePosToFieldPos(event.touch.getLocation());
-            let tile = this.playField.getTileAt(fieldPos.x, fieldPos.y);
+            const fieldPos = this.playField.scenePosToFieldPos(event.touch.getLocation());
+            const tile = this.playField.getTileAt(fieldPos.x, fieldPos.y);
             if (tile && (tile === this.touchStartTile)) {
                 this.clickOnTile(tile);
             }
@@ -266,10 +266,10 @@ export default class SceneGameplay extends cc.Component {
         this.levelClose.active = true;
         this.levelCloseBg.opacity = 0;
 
-        let tapTo = this.levelCloseTapToContinue;
+        const tapTo = this.levelCloseTapToContinue;
         tapTo.opacity = 0;
 
-        let clip = cc.loader.getRes(success ? "sounds/mission_passed" : "sounds/fail");
+        const clip = cc.loader.getRes(success ? "sounds/mission_passed" : "sounds/fail");
         if (clip) {
             cc.audioEngine.play(clip, false, 0.3);
         }
