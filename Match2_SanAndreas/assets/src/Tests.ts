@@ -8,7 +8,7 @@ const A = ANY_COLOR;
 
 type EqualsFunc<T> = (val: T, anotherVal: T) => boolean;
 function WithEqualsMethod<T>(equalsFunc?: EqualsFunc<T>) {
-    const _equalsFunc: EqualsFunc<T> =  equalsFunc? equalsFunc : ((a, b) => a === b);
+    const _equalsFunc: EqualsFunc<T> = equalsFunc ? equalsFunc : ((a, b) => a === b);
     class NewClass {
         val: T;
         constructor(val: T) {
@@ -16,9 +16,6 @@ function WithEqualsMethod<T>(equalsFunc?: EqualsFunc<T>) {
         }
         equals(anotherVal: T) {
             return _equalsFunc(this.val, anotherVal);
-        }
-        static create(initVal: T): NewClass {
-            return new NewClass(initVal);
         }
     }
     return NewClass;
