@@ -1,0 +1,13 @@
+{
+  "name": "match2_san_andreas",
+  "main": "assets/src/SceneGameplay.ts",
+  "scripts": {
+    "docs": "typedoc --mode modules --out docs assets/src --ignoreCompilerErrors",
+    "docshelp": "typedoc --help"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typedoc": "^0.18.0",
+    "typescript": "^3.9.7"
+  }
+}
