@@ -4,6 +4,7 @@ import BaseTile from "./BaseTile";
 import { TILES_ACCELERATION, TILES_MAX_SPEED, ALPHA_MAX, TILE_HEIGHT, TILE_WIDTH } from "./Constants";
 import TileRender from "./TileRender";
 import Tile from "./Tile";
+import TilesFabric from "./TilesFabric";
 
 class ColumnInfo {
     /** @description Общее время падения столбца */
@@ -28,16 +29,6 @@ class ColumnInfo {
         return this.fallTime > 0;
     }
 }
-
-const SAN_ANDREAS_GANGS_CONFIG: {name: string, avatars: number, color: string}[] = [
-    { name: "ballas", avatars: 4, color: "#780088" },
-    { name: "grove", avatars: 4, color: "#3DD166" },
-    { name: "police", avatars: 5, color: "#4148FD" },
-    { name: "vagos", avatars: 3, color: "#FFF153" },
-    { name: "triads", avatars: 3, color: "#080808" },
-    { name: "aztecas", avatars: 3, color: "#28F3EB" },
-    { name: "rifa", avatars: 4, color: "#527881" },
-];
 
 /**
  * @class
@@ -74,18 +65,9 @@ export default class PlayField extends BasePlayField {
      * @public
      */
     createTile(color: number): BaseTile {
-        const newTile = new Tile(color);
+        const newTile = TilesFabric.create(color, this.tilesPrefab);
 
-        const t = cc.instantiate(this.tilesPrefab.node).getComponent(TileRender);
-        const gConf = SAN_ANDREAS_GANGS_CONFIG[color - 1];
-        const fileName = "gangs/" + gConf.name
-            + (Math.floor(Math.random() * gConf.avatars) + 1) + ".png";
-        t.frame.color = cc.color().fromHEX(gConf.color);
-        t.glass.color = cc.color().fromHEX(gConf.color);
-        t.avatar.spriteFrame = cc.loader.getRes(fileName, cc.SpriteFrame);
-
-        newTile.renderTile = t;
-        this.node.addChild(t.node);
+        this.node.addChild(newTile.renderTile.node);
         return newTile;
     }
 
