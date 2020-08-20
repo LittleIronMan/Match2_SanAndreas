@@ -1,34 +1,11 @@
 import BasePlayField from "./BasePlayField";
 import Pos from "./Pos";
 import BaseTile from "./BaseTile";
-import { TILES_ACCELERATION, TILES_MAX_SPEED, ALPHA_MAX, TILE_HEIGHT, TILE_WIDTH } from "./Constants";
+import { TILE_HEIGHT, TILE_WIDTH } from "./Constants";
 import TileRender from "./TileRender";
 import Tile from "./Tile";
 import TilesFabric from "./TilesFabric";
-
-class ColumnInfo {
-    /** @description Общее время падения столбца */
-    fallTime: number = 0;
-
-    /**
-     * @description Считает скорость движения тайлов в столбце, исходя из общего времени падения fallTime.
-     * @param futureDt {number} Если передать аргумент futureDt,
-     * то эта величина времени прибавляется к fallTime,
-     * тем самым рассчитывается "будущая" скорость.
-     * @returns {number} Cкорость тайлов в столбце
-     * @public
-     */
-    getSpeed(futureDt=0): number {
-        let speed = TILES_ACCELERATION * (this.fallTime + futureDt);
-        speed = Math.min(speed, TILES_MAX_SPEED);
-        return speed;
-    }
-
-    /** @description Движется ли тайл, или нет. */
-    isMove(): boolean {
-        return this.fallTime > 0;
-    }
-}
+import TilesMoveManager from "./TilesMoveManager";
 
 /**
  * @class
@@ -37,25 +14,26 @@ class ColumnInfo {
 export default class PlayField extends BasePlayField {
     node: cc.Node;
     tilesPrefab: TileRender = null as any;
-    columns: ColumnInfo[] = []; // массив с информацией о двигающихся столбцах с тайлами
-    needCheckTilesFall = false; // флаг того, что необходимо пересчитать дискретные позиции тайлов
-    tilesFallDetected = false; // флаг того, что тайлы на поле в данный момент двигаются
-    tilesKillDetected = false; // флаг того, что на поле активна анимация уничтожения тайлов
+
+    /** флаг того, что необходимо пересчитать дискретные позиции тайлов */
+    needCheckTilesFall = false;
+
+    /** флаг того, что на поле активна анимация уничтожения тайлов */
+    tilesKillDetected = false;
+
+    /** флаг того, что тайлы на поле в данный момент двигаются */
+    tilesFallDetected = false;
+
+    moveManager: TilesMoveManager = null as any;
+
     hasActionsOnField(): boolean {
         return this.tilesFallDetected || this.tilesKillDetected;
     }
 
-    /**
-     * @param width ширина поля(в тайлах, т.е. натуральное число)
-     * @param height высота поля
-     * @param countColors максимальное кол-во различных цветов тайлов на поле
-     */
     constructor(args: {width: number, height: number, countColors: number}) {
         super(args);
         this.node = new cc.Node();
-        for (let x = 0; x < args.width; x++) {
-            this.columns.push(new ColumnInfo());
-        }
+        this.moveManager = new TilesMoveManager(this);
     }
 
     /**
@@ -107,6 +85,7 @@ export default class PlayField extends BasePlayField {
 
         }
     }
+
     /** Конвертирует дискретную позицию тайла на поле в "пиксельную" позицию на сцене. Мемоизирована */
     fieldPosToScenePos(fieldPos: Pos): cc.Vec2 {
         const hash = fieldPos.x * 100 + fieldPos.y;
@@ -125,6 +104,7 @@ export default class PlayField extends BasePlayField {
         const fieldPos = new Pos(Math.floor(topLeftPos.x / TILE_WIDTH), Math.floor(-topLeftPos.y / TILE_HEIGHT));
         return fieldPos;
     }
+
     getTileAt(x: number, y: number): Tile | null {
         if (!this.isValidPos(x, y)) {
             return null;
@@ -132,75 +112,17 @@ export default class PlayField extends BasePlayField {
         const tile = this.field[x][y] as Tile;
         return tile;
     }
-    moveTiles(dt: number) {
-        const topTileY = this.fieldPosToScenePos(new Pos(0, 0)).y;
 
-        this.tilesFallDetected = false;
-        for (let x = 0; x < this.width; x++) {
-            const column = this.columns[x];
-            let columnFallDetected = false;
-            for (let y = this.height - 1; y >= 0; y--) {
-                const tile = this.field[x][y] as Tile;
-                if (!tile) {
-                    continue;
-                }
-                const tNode = tile.renderTile.node;
-                const realPos = tNode.getPosition();
-                const targetPos = this.fieldPosToScenePos(tile.pos);
-                // тайл движется тогда, когда не равны его целевая и текущая позиции
-                if (!realPos.equals(targetPos)) {
-                    if (!columnFallDetected) {
-                        columnFallDetected = true;
-                        column.fallTime += dt;
-                    }
-                    let nextTilePos: cc.Vec2;
-                    // Если после перемещения тайла с его текущей скорость
-                    // он(тайл) перелетит свою целевую позицию,
-                    // то ставим тайл на целевую позицию (т.е. останавливаем его движение).
-                    // При этом устанавливаем флаг пересчета дискретных(а значит и целевых) позиций тайлов
-                    const nextY = realPos.y - (column.getSpeed() * dt);
-                    if (nextY <= targetPos.y) {
-                        nextTilePos = targetPos;
-                        // #todo анимация остановки тайла
-                        this.needCheckTilesFall = true;
-                        if (tile.isDropped) {
-                            tile.isDropped = false;
-                            tNode.opacity = ALPHA_MAX;
-                        }
-                    }
-                    else {
-                        nextTilePos = cc.v2(realPos.x, nextY);
-                        // если же в этом фрейме тайл еще НЕ перелетает целевую позицию,
-                        // но перелетит её в следующем фрейме - это также значит, что пора пересчитать целевые позиции тайлов
-                        const nextNextY = nextY - (column.getSpeed(dt) * dt);
-                        if (nextNextY <= targetPos.y) {
-                            this.needCheckTilesFall = true;
-                        }
-                        if (tile.isDropped) {
-                            // обновляем величину прозрачности для новорожденных тайлов
-                            if (realPos.y <= topTileY) {
-                                tile.isDropped = false;
-                                tNode.opacity = ALPHA_MAX;
-                            }
-                            if ((realPos.y > topTileY) && (realPos.y < (topTileY + TILE_HEIGHT))) {
-                                tNode.opacity = (1 - (realPos.y - topTileY) / TILE_HEIGHT) * 255;
-                            }
-                        }
-                    }
-                    tNode.setPosition(nextTilePos);
-                }
-            }
-            if (columnFallDetected) {
-                this.tilesFallDetected = true;
-            }
-            else {
-                column.fallTime = 0;
-            }
-        }
+    moveTiles(dt: number) {
+        const moveDetected = this.moveManager.moveTiles(dt);
+
+        let newFalls = false;
+
         if (this.needCheckTilesFall) {
             this.needCheckTilesFall = false;
-            const newFalls = this.oneMoveDownTiles();
-            this.tilesFallDetected = this.tilesFallDetected || newFalls;
+            newFalls = this.oneMoveDownTiles();
         }
+
+        this.tilesFallDetected = moveDetected || newFalls;
     }
 }

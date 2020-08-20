@@ -25,6 +25,11 @@ export default class BasePlayField {
     /** Массив предустановленных тайлов, выпадающих сверху*/
     dropDownTiles: number[][];
 
+    /**
+     * @param width ширина поля(в тайлах, т.е. натуральное число)
+     * @param height высота поля
+     * @param countColors максимальное кол-во различных цветов тайлов на поле
+     */
     constructor({width, height, countColors}: {width: number, height: number, countColors: number}) {
         this.width = width;
         this.height = height;
