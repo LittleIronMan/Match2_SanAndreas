@@ -16,6 +16,8 @@ export const FIELD_WIDTH_DEFAULT = 8;
 export const FIELD_HEIGHT_DEFAULT = 8;
 export const MAX_COLORS_ON_FIELD_DEFAULT = 5;
 export const MIN_TILES_GROUP_DEFAULT = 2;
+export const BOMB_EXPLOSION_RADIUS = 2;
+export const GROUP_SIZE_FOR_BOMB_DEFAULT = 5;
 
 export const OK = 1;
 
@@ -32,6 +34,9 @@ export const ANY_COLOR = -1;
 
 /** "Цвет" заблокированной ячейки поля */
 export const BLOCKED_CELL = -2;
+
+/** "Цвет" бомбы */
+export const BOMB_COLOR = -3;
 
 
 export const DEFAULT_VOLUME = 0.3;

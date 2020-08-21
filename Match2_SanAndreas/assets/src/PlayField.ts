@@ -1,7 +1,7 @@
-import BasePlayField from "./BasePlayField";
+import BasePlayField, { SetOnFieldOptions } from "./BasePlayField";
 import Pos from "./Pos";
-import BaseTile from "./BaseTile";
-import { TILE_HEIGHT, TILE_WIDTH } from "./Constants";
+import BaseTile, { TileType } from "./BaseTile";
+import { TILE_HEIGHT, TILE_WIDTH, ANY_COLOR } from "./Constants";
 import TileRender from "./TileRender";
 import Tile from "./Tile";
 import TilesFabric from "./TilesFabric";
@@ -42,8 +42,8 @@ export default class PlayField extends BasePlayField {
      * @returns Новый объект реального тайла
      * @public
      */
-    createTile(color: number): BaseTile {
-        const newTile = TilesFabric.create(color, this.tilesPrefab);
+    createTile(type: TileType, color = ANY_COLOR): BaseTile {
+        const newTile = TilesFabric.create(type, color, this.tilesPrefab);
 
         this.node.addChild(newTile.renderTile.node);
         return newTile;
@@ -60,14 +60,14 @@ export default class PlayField extends BasePlayField {
      * @param onDrop Тайл размещается на поле после "выпадения" сверху, например.
      * Его нужно разместить чуть выше самого верхнего ряда.
      */
-    setTileOnField(tile: Tile | null, x: number, y: number, onInit=false, onDrop=false) {
+    setTileOnField(tile: Tile | null, x: number, y: number, opts: SetOnFieldOptions = {}) {
         this._setTileOnField(tile, x, y);
         if (tile) {
-            if (onInit || onDrop) {
+            if (opts.onInit || opts.onDrop || opts.onGenerating) {
                 // при инициализации массива тайлов, или при рождении новых тайлов -
                 // устанавливаем их ноды на сцене
                 const pos = this.fieldPosToScenePos(tile.pos);
-                if (onDrop) {
+                if (opts.onDrop) {
                     const downTile = this.field[x][1] as Tile;
                     if (downTile && downTile.isDropped) {
                         pos.y = downTile.renderTile.node.y + TILE_HEIGHT;

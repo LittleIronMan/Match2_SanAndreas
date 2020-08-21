@@ -10,4 +10,10 @@ export default class TileRender extends cc.Component {
 
     @property(cc.Node)
     glass: cc.Node = null as any;
+
+    @property(cc.Node)
+    grenade: cc.Node = null as any;
+
+    @property(cc.Node)
+    stoneWall: cc.Node = null as any;
 }

@@ -1,4 +1,4 @@
-import BaseTile from "./BaseTile";
+import BaseTile, { TileType } from "./BaseTile";
 import TileRender from "./TileRender";
 import { TILES_ACCELERATION, TILES_MAX_SPEED } from "./Constants";
 
@@ -31,8 +31,8 @@ export default class Tile extends BaseTile {
         return this.fallTime > 0;
     }
 
-    constructor(color: number) {
-        super(color);
+    constructor(type: TileType, color: number) {
+        super(type, color);
         this.renderTile = null as any; // чтобы компилятор не ругался, после вызова фукнции createTile - поле node никогда не будет null
     }
 }

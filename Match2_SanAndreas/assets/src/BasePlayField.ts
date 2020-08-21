@@ -1,9 +1,16 @@
 import gameConfig from "./GameConfig";
-import { ANY_COLOR, EMPTY_CELL, BLOCKED_CELL, LEFT, RIGHT, DOWN, UP, OK } from "./Constants";
-import BaseTile from "./BaseTile";
+import { LEFT, RIGHT, DOWN, UP, OK } from "./Constants";
+import * as C from "./Constants";
+import BaseTile, { TileType } from "./BaseTile";
 import Pos from "./Pos";
 
-type Dir = (1 | -1);
+type Dir = (typeof RIGHT | typeof LEFT);
+
+export interface SetOnFieldOptions {
+    onInit?: true,
+    onDrop?: true,
+    onGenerating?: true
+}
 
 /** Тип для множества уникальных дискретных позиций */
 type PosHashMap<T> = {[posHash: number]: T};
@@ -17,7 +24,7 @@ const DEFAULT_TRIGGER = LEFT;
 const DENY_FALL_TO_SIDE = 0;
 const MISMATCH_TRIGGER = 1;
 const TRIGGER_MATCH = 2;
-type TriggersMatchValue = 0 | 1 | 2;
+enum TriggersMatchValue { DENY_FALL_TO_SIDE = 0, MISMATCH_TRIGGER = 1, TRIGGER_MATCH = 1 };
 
 /** Базовый класс для игрового поля */
 export default class BasePlayField {
@@ -72,8 +79,8 @@ export default class BasePlayField {
      * Функция создания нового тайла на поле,
      * Может быть перегружена в классах-наследниках
      */
-    createTile(color: number): BaseTile {
-        const newTile = new BaseTile(color);
+    createTile(type: TileType, color: number = C.ANY_COLOR): BaseTile {
+        const newTile = new BaseTile(type, color);
         return newTile;
     }
 
@@ -97,7 +104,7 @@ export default class BasePlayField {
     }
 
     /** Ставит(переставляет) тайл на поле, обновляя соответствующие переменные */
-    setTileOnField(tile: BaseTile | null, x: number, y: number, onInit=false, onDrop=false) {
+    setTileOnField(tile: BaseTile | null, x: number, y: number, opts: SetOnFieldOptions = {}) {
         this._setTileOnField(tile, x, y);
     }
 
@@ -112,16 +119,20 @@ export default class BasePlayField {
         for (let x = 0; x < this.width; x++) {
             for (let y = 0; y < this.height; y++) {
                 let color = arr[y][x];
-                if (color == ANY_COLOR) {
+                if (color == C.ANY_COLOR) {
                     color = this.getRandomColor();
                 }
                 if (color > 0) {
-                    const newTile = this.createTile(color);
-                    this.setTileOnField(newTile, x, y, true);
+                    const newTile = this.createTile(TileType.SIMPLE, color);
+                    this.setTileOnField(newTile, x, y, {onInit: true});
                 }
-                else if (color === BLOCKED_CELL) {
+                else if (color === C.BLOCKED_CELL) {
                     const posHash = this.getPosHash(x, y);
                     this.blockedCells[posHash] = OK;
+                }
+                else if (color === C.BOMB_COLOR) {
+                    const bomb = this.createTile(TileType.BOMB, color);
+                    this.setTileOnField(bomb, x, y, {onInit: true});
                 }
             }
         }
@@ -137,18 +148,18 @@ export default class BasePlayField {
             for (let y = 0; y < this.height; y++) {
                 const testValue = arr[y][x];
 
-                if (testValue === ANY_COLOR) {
+                if (testValue === C.ANY_COLOR) {
                     continue;
                 }
 
                 const tile = this.field[x][y];
 
                 if (!tile) {
-                    if (testValue === EMPTY_CELL) {
+                    if (testValue === C.EMPTY_CELL) {
                         continue;
                     }
                     const posHash = this.getPosHash(x, y);
-                    if (testValue === BLOCKED_CELL && this.blockedCells[posHash]) {
+                    if (testValue === C.BLOCKED_CELL && this.blockedCells[posHash]) {
                         continue;
                     }
                     mismatchFound = true; break;
@@ -175,8 +186,8 @@ export default class BasePlayField {
         for (let x = 0; x < this.width; x++) {
             for (let y = 0; y < this.height; y++) {
                 const color = this.getRandomColor();
-                const newTile = this.createTile(color);
-                this.setTileOnField(newTile, x, y, true);
+                const newTile = this.createTile(TileType.SIMPLE, color);
+                this.setTileOnField(newTile, x, y, {onInit: true});
             }
         }
     }
@@ -363,7 +374,7 @@ export default class BasePlayField {
 
         for (let y = 0; y <= this.height - 2; y++) {
             for (let x = 0; x < this.width; x++) {
-                let dirToFall: -1 | 1 | 0 = 0;
+                let dirToFall: Dir | 0 = 0;
 
                 const posHash = this.getPosHash(x, y);
 
@@ -404,6 +415,9 @@ export default class BasePlayField {
 
                     // далее по коду подразумевается что triggerMatch === MISMATCH_TRIGGER
 
+                    // проверяем тайл, расположенный на той-же строке, но через один столбец(x + 2 * dir, y)
+                    // который тоже может хотеть упасть в ячейку (x + dir, y + 1)
+                    // будем называть этот тайл "соперником"(rival)
                     const rivalX = x + 2 * dir;
                     const rivalDir = -dir as Dir;
                     let rivalTriggersMatch = this.getTriggersMatchValue(rivalX, y, rivalDir, trgrUp, movedTiles);
@@ -492,8 +506,8 @@ export default class BasePlayField {
             else {
                 color = this.getRandomColor();
             }
-            const newTile = this.createTile(color);
-            this.setTileOnField(newTile, x, 0, false, true);
+            const newTile = this.createTile(TileType.SIMPLE, color);
+            this.setTileOnField(newTile, x, 0, {onDrop: true});
 
             hasNewTiles = true;
         }

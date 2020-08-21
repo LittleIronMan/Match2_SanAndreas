@@ -1,5 +1,6 @@
 import TileRender from "./TileRender";
 import Tile from "./Tile";
+import { TileType } from "./BaseTile";
 
 const SAN_ANDREAS_GANGS_CONFIG: { name: string; avatars: number; color: string; }[] = [
     { name: "ballas", avatars: 4, color: "#780088" },
@@ -12,16 +13,26 @@ const SAN_ANDREAS_GANGS_CONFIG: { name: string; avatars: number; color: string; 
 ];
 
 export default class TilesFabric {
-    static create(color: number, prefab: TileRender): Tile {
-        const newTile = new Tile(color);
+    static create(type: TileType, color: number, prefab: TileRender): Tile {
+        const newTile = new Tile(type, color);
 
         const t = cc.instantiate(prefab.node).getComponent(TileRender);
-        const gConf = SAN_ANDREAS_GANGS_CONFIG[color - 1];
-        const fileName = "gangs/" + gConf.name
-            + (Math.floor(Math.random() * gConf.avatars) + 1) + ".png";
-        t.frame.color = cc.color().fromHEX(gConf.color);
-        t.glass.color = cc.color().fromHEX(gConf.color);
-        t.avatar.spriteFrame = cc.loader.getRes(fileName, cc.SpriteFrame);
+
+        if (type === TileType.SIMPLE) {
+            const gConf = SAN_ANDREAS_GANGS_CONFIG[color - 1];
+            const fileName = "gangs/" + gConf.name
+                + (Math.floor(Math.random() * gConf.avatars) + 1) + ".png";
+            t.frame.color = cc.color().fromHEX(gConf.color);
+            t.glass.color = cc.color().fromHEX(gConf.color);
+            t.avatar.spriteFrame = cc.loader.getRes(fileName, cc.SpriteFrame);
+        }
+        else if (type === TileType.BOMB) {
+            t.frame.active = false;
+            t.glass.active = false;
+            t.avatar.node.active = false;
+
+            t.grenade.active = true;
+        }
 
         newTile.renderTile = t;
 
