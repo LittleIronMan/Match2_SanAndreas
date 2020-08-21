@@ -9,7 +9,7 @@ import TilesMoveManager from "./TilesMoveManager";
 
 /**
  * @class
- * @classdesc Хранит в себе состояние поля фишек
+ * @classdesc Хранит в себе состояние поля тайлов
  */
 export default class PlayField extends BasePlayField {
     node: cc.Node;
@@ -88,7 +88,7 @@ export default class PlayField extends BasePlayField {
 
     /** Конвертирует дискретную позицию тайла на поле в "пиксельную" позицию на сцене. Мемоизирована */
     fieldPosToScenePos(fieldPos: Pos): cc.Vec2 {
-        const hash = fieldPos.x * 100 + fieldPos.y;
+        const hash = this.getPosHash(fieldPos.x, fieldPos.y);
         const cache = this._mem1[hash];
         if (cache) { return cache.clone(); }
         const pos = cc.v2((fieldPos.x - 0.5 * (this.width - 1)) * TILE_WIDTH, (0.5 * (this.height - 1) - fieldPos.y) * TILE_HEIGHT);

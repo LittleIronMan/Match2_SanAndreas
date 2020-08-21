@@ -1,12 +1,35 @@
 import BaseTile from "./BaseTile";
 import TileRender from "./TileRender";
+import { TILES_ACCELERATION, TILES_MAX_SPEED } from "./Constants";
 
 export default class Tile extends BaseTile {
-    /** @description ссылка на нод, который рендерит тайл на сцене */
+    /** @description Ссылка на нод, который рендерит тайл на сцене */
     renderTile: TileRender;
 
-    /** @description фишка только что выпала с неба, еще появляется */
+    /** @description Тайл только что выпала с неба, еще появляется */
     isDropped = false;
+
+    /** @description Общее время падения столбца */
+    fallTime: number = 0;
+
+    /**
+     * @description Считает скорость движения тайлов в столбце, исходя из общего времени падения fallTime.
+     * @param futureDt {number} Если передать аргумент futureDt,
+     * то эта величина времени прибавляется к fallTime,
+     * тем самым рассчитывается "будущая" скорость.
+     * @returns {number} Cкорость тайлов в столбце
+     * @public
+     */
+    getSpeed(futureDt=0): number {
+        let speed = TILES_ACCELERATION * (this.fallTime + futureDt);
+        speed = Math.min(speed, TILES_MAX_SPEED);
+        return speed;
+    }
+
+    /** @description Движется ли тайл, или нет. */
+    isMove(): boolean {
+        return this.fallTime > 0;
+    }
 
     constructor(color: number) {
         super(color);

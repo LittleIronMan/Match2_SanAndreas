@@ -17,11 +17,25 @@ export const FIELD_HEIGHT_DEFAULT = 8;
 export const MAX_COLORS_ON_FIELD_DEFAULT = 5;
 export const MIN_TILES_GROUP_DEFAULT = 2;
 
-export const ANY_COLOR = -1;
+export const OK = 1;
+
+export const LEFT = -1;
+export const RIGHT = 1;
+export const UP = 1;
+export const DOWN = -1;
+
 /** "Цвет" пустой ячейки поля */
 export const EMPTY_CELL = 0;
 
+/** "Цвет" тайла произвольного цвета */
+export const ANY_COLOR = -1;
+
+/** "Цвет" заблокированной ячейки поля */
+export const BLOCKED_CELL = -2;
+
+
 export const DEFAULT_VOLUME = 0.3;
+
 
 /** Цена за один убитый тайл */
 export const ONE_TILE_PRICE = 50;

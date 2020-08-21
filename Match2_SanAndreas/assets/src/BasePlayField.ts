@@ -1,9 +1,23 @@
 import gameConfig from "./GameConfig";
-import { ANY_COLOR, EMPTY_CELL } from "./Constants";
+import { ANY_COLOR, EMPTY_CELL, BLOCKED_CELL, LEFT, RIGHT, DOWN, UP, OK } from "./Constants";
 import BaseTile from "./BaseTile";
 import Pos from "./Pos";
 
-const FOUR_SIDES = [{x: -1, y: 0}, {x: 1, y: 0}, {x: 0, y: -1}, {x: 0, y: 1}];
+type Dir = (1 | -1);
+
+/** Тип для множества уникальных дискретных позиций */
+type PosHashMap<T> = {[posHash: number]: T};
+type TilesSet = PosHashMap<BaseTile>;
+
+const FOUR_SIDES = [{x: LEFT, y: 0}, {x: RIGHT, y: 0}, {x: 0, y: DOWN}, {x: 0, y: UP}];
+
+
+const DEFAULT_TRIGGER = LEFT;
+
+const DENY_FALL_TO_SIDE = 0;
+const MISMATCH_TRIGGER = 1;
+const TRIGGER_MATCH = 2;
+type TriggersMatchValue = 0 | 1 | 2;
 
 /** Базовый класс для игрового поля */
 export default class BasePlayField {
@@ -17,13 +31,24 @@ export default class BasePlayField {
     countColors: number;
 
     /**
-     * Массив тайлов(width * height).
+     * Двумерный массив тайлов(width * height).
      * Визуально индексация начинается с верхней-левой ячейки поля.
      */
     field: (BaseTile | null)[][];
 
-    /** Массив предустановленных тайлов, выпадающих сверху*/
-    dropDownTiles: number[][];
+    /** Множество предустановленных тайлов, выпадающих из точек рождения */
+    dropDownTiles: {[posHash: number]: number[]} = {};
+
+    /** Множество заблокированных клеток поля */
+    blockedCells: PosHashMap<1> = {};
+
+    /**
+     * Для заданной ячейки возвращает рекомендуемое направление движения вниз-вбок В эту ячейку.
+     * Например, для если для ячейки (3,3) триггер == -1,
+     * то это означает что рекомендуется падение в эту ячейку ИЗ ЛЕВОГО столбца, при прочих равных.
+     * Используется для чередования падений вбок в некоторые ячейки.
+     */
+    fallToSideTriggers: {[posHash: number]: Dir} = {};
 
     /**
      * @param width ширина поля(в тайлах, т.е. натуральное число)
@@ -35,10 +60,8 @@ export default class BasePlayField {
         this.height = height;
         this.countColors = countColors;
         this.field = Array(width);
-        this.dropDownTiles = Array(width);
         for (let x = 0; x < width; x++) {
             this.field[x] = Array(height);
-            this.dropDownTiles[x] = [];
             for (let y = 0; y < height; y++) {
                 this.field[x][y] = null;
             }
@@ -67,6 +90,7 @@ export default class BasePlayField {
         // устанавливаем тайл на новое место
         this.field[x][y] = tile;
         if (tile) {
+            tile.prevPos.set(tile.pos.x, tile.pos.y);
             tile.pos.set(x, y);
             tile.onField = true;
         }
@@ -87,10 +111,17 @@ export default class BasePlayField {
     initWith(arr: number[][]) {
         for (let x = 0; x < this.width; x++) {
             for (let y = 0; y < this.height; y++) {
-                const color = arr[y][x];
+                let color = arr[y][x];
+                if (color == ANY_COLOR) {
+                    color = this.getRandomColor();
+                }
                 if (color > 0) {
                     const newTile = this.createTile(color);
                     this.setTileOnField(newTile, x, y, true);
+                }
+                else if (color === BLOCKED_CELL) {
+                    const posHash = this.getPosHash(x, y);
+                    this.blockedCells[posHash] = OK;
                 }
             }
         }
@@ -105,20 +136,29 @@ export default class BasePlayField {
         for (let x = 0; x < this.width; x++) {
             for (let y = 0; y < this.height; y++) {
                 const testValue = arr[y][x];
+
                 if (testValue === ANY_COLOR) {
                     continue;
                 }
+
                 const tile = this.field[x][y];
+
                 if (!tile) {
-                    if (testValue !== EMPTY_CELL) {
-                        mismatchFound = true; break;
+                    if (testValue === EMPTY_CELL) {
+                        continue;
                     }
-                    continue;
+                    const posHash = this.getPosHash(x, y);
+                    if (testValue === BLOCKED_CELL && this.blockedCells[posHash]) {
+                        continue;
+                    }
+                    mismatchFound = true; break;
                 }
+
                 if (tile.color !== testValue) {
                     mismatchFound = true; break;
                 }
             }
+
             if (mismatchFound) {
                 break;
             }
@@ -141,41 +181,324 @@ export default class BasePlayField {
         }
     }
 
-    /** Функция дискретного перемещения тайлов на единицу вниз, с учетом других тайлов. */
-    oneMoveDownTiles() {
-        let hasDownMove = false;
+    canTileFallDown(tile: BaseTile): boolean {
+        const tileDown = this.field[tile.pos.x][tile.pos.y + 1];
+        if (tileDown) {
+            // не двигаемся, если под тайлом другой тайл
+            return false;
+        }
+        const downPosHash = this.getPosHash(tile.pos.x, tile.pos.y + 1);
+        if (this.blockedCells[downPosHash]) {
+            // не двигаемся, если ячейка снизу заблокирована
+            return false;
+        }
+        return true;
+    }
+
+    canTileFallToSide(tile: BaseTile, dir: Dir, movedTiles: TilesSet): boolean {
+        const x = tile.pos.x + dir;
+        const y = tile.pos.y + 1;
+
+        if (!this.isValidPos(x, y)) {
+            return false;
+        }
+
+        const tileDown = this.field[x][y];
+        if (tileDown) {
+            // не двигаемся, если под тайлом другой тайл
+            return false;
+        }
+        const downPosHash = this.getPosHash(x, y);
+        if (this.blockedCells[downPosHash]) {
+            // не двигаемся, если ячейка снизу заблокирована
+            return false;
+        }
+
+        let denyFall = true;
+        for (let yTop = tile.pos.y; yTop >= 0; yTop--) {
+            const topPosHash = this.getPosHash(x, yTop);
+            if (this.blockedCells[topPosHash]) {
+                // если в нише, в которую хотим падать, сверху наткнулись на блокиратор - значит в эту нишу падать МОЖНО
+                denyFall = false;
+                break;
+            }
+            const topTile = this.field[x][yTop];
+            if (topTile) {
+                break;
+            }
+        }
+
+        if (denyFall) {
+            return false;
+        }
+
+        // за один вызов фукнции дискретного падения тайлов, 
+        // в столбце из тайлов(без пустот и блокираторов) может упасть вбок только один тайл(самый верхний)
+        // код ниже проверяет это условие
+        for (const movedTile of Object.values(movedTiles)) {
+            if ((movedTile.prevPos.x === tile.pos.x) && (movedTile.prevPos.x !== movedTile.pos.x)) {
+                // нашелся сдвинутый вниз-вбок тайл из этого-же столбца
+
+                if (movedTile.prevPos.y < tile.pos.y) {
+                    // этот тайл был расположен выше текущего тайла
+
+                    denyFall = true;
+                    for (let yTop = tile.pos.y - 1; yTop > movedTile.prevPos.y; yTop--) {
+                        // если между этими тайлами есть пустые клетки - снимаем запрет
+                        let midTile = this.field[tile.pos.x][yTop];
+                        if (!midTile) {
+                            denyFall = false;
+                            break;
+                        }
+                        // также снимаем запрет, если между этими тайлами есть блокиратор
+                        const topPosHash = this.getPosHash(x, yTop);
+                        if (this.blockedCells[topPosHash]) {
+                            denyFall = false;
+                            break;
+                        }
+                    }
+
+                    if (denyFall) {
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (denyFall) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /** Функция дискретного перемещения тайлов на единицу СТРОГО ВНИЗ, с учетом других тайлов и особенностей поля. */
+    oneMoveStrictDownTiles(movedTiles: TilesSet): TilesSet {
+        /** Множество тайлов, сдвинутых вертикально вниз */
+        const tilesMovedDown: TilesSet = {};
+
         for (let y = this.height - 2; y >= 0; y--) {
             for (let x = 0; x < this.width; x++) {
+                const posHash = this.getPosHash(x, y);
+                if (movedTiles[posHash]) {
+                    continue;
+                }
+
                 const tile = this.field[x][y];
                 if (!tile) {
                     // тайл не найден в ячейке
                     continue;
                 }
-                const tileDown = this.field[x][y + 1];
-                if (tileDown) {
-                    // не двигаемся, если под тайлом препятствие
+
+                if (!this.canTileFallDown(tile)) {
                     continue;
                 }
+
                 this.setTileOnField(tile, x, y + 1);
-                hasDownMove = true;
+                const downPosHash = this.getPosHash(x, y + 1);
+                tilesMovedDown[downPosHash] = tile;
+                movedTiles[downPosHash] = tile;
             }
         }
+
+        return tilesMovedDown;
+    }
+
+    private moveTileToSide(tile: BaseTile, dir: Dir, movedTiles: TilesSet, lastMovedTiles: TilesSet) {
+        const x = tile.pos.x + dir;
+        const y = tile.pos.y + 1;
+
+        this.setTileOnField(tile, x, y);
+
+        const downPosHash = this.getPosHash(x, y);
+
+        this.fallToSideTriggers[downPosHash] = dir;
+
+        movedTiles[downPosHash] = tile;
+        lastMovedTiles[downPosHash] = tile;
+    }
+
+    getTriggersMatchValue(x: number, y: number, dir: Dir, trgrUp: Dir, movedTiles: TilesSet): TriggersMatchValue {
+        let result: TriggersMatchValue = DENY_FALL_TO_SIDE;
+
+        if (!this.isValidPos(x, y)) {
+            return result;
+        }
+
+        const posHash = this.getPosHash(x, y);
+
+        if (movedTiles[posHash]) {
+            return result;
+        }
+
+        const tile = this.field[x][y];
+
+        if (!tile) {
+            return result;
+        }
+
+        if (this.canTileFallDown(tile)) {
+            // не трогаем те тайлы, которые могут падать вниз
+            return result;
+        }
+
+        if (!this.canTileFallToSide(tile, dir, movedTiles)) {
+            return result;
+        }
+
+        if (trgrUp === -dir) {
+            result = TRIGGER_MATCH;
+        }
+        else {
+            result = MISMATCH_TRIGGER;
+        }
+
+        return result;
+    }
+
+    /** Функция дискретного перемещения тайлов на единицу ВНИЗ И В БОК, с учетом других тайлов и особенностей поля. */
+    oneMoveDownAndSideTiles(movedTiles: TilesSet): TilesSet {
+        /** Множество тайлов, сдвинутых вниз-вбок */
+        const tilesMovedToSide: TilesSet = {};
+
+        for (let y = 0; y <= this.height - 2; y++) {
+            for (let x = 0; x < this.width; x++) {
+                let dirToFall: -1 | 1 | 0 = 0;
+
+                const posHash = this.getPosHash(x, y);
+
+                let leftDirTriggerMatch = DENY_FALL_TO_SIDE;
+
+                // для каждого тайла проверяем возможность падать вниз-вбок слева направо
+                for (const dir of [LEFT, RIGHT] as Dir[]) {
+                    let trgrUp = this.fallToSideTriggers[this.getPosHash(x + dir, y + 1)];
+                    if (!trgrUp) {
+                        trgrUp = DEFAULT_TRIGGER;
+                    }
+
+                    let triggerMatch = this.getTriggersMatchValue(x, y, dir, trgrUp, movedTiles);
+
+                    if (triggerMatch === TRIGGER_MATCH) {
+                        // тайл может упасть по заданному направлению, и триггер совпадает
+                        dirToFall = dir;
+                        break;
+                    }
+
+                    if (triggerMatch === DENY_FALL_TO_SIDE) {
+                        if (dir === LEFT) {
+                            // тайл не может падать влево, проверяем правое направление
+                            leftDirTriggerMatch = DENY_FALL_TO_SIDE;
+                            continue;
+                        }
+                        else if (leftDirTriggerMatch === MISMATCH_TRIGGER) {
+                            // тайл не может падать направо, но может налево(но триггер не сопадает),
+                            // значит тайл упадет налево, игнорируя триггер
+                            dirToFall = LEFT;
+                            break;
+                        }
+                        else {
+                            // тайл не может падать ни влево, ни направо
+                            break;
+                        }
+                    }
+
+                    // далее по коду подразумевается что triggerMatch === MISMATCH_TRIGGER
+
+                    const rivalX = x + 2 * dir;
+                    const rivalDir = -dir as Dir;
+                    let rivalTriggersMatch = this.getTriggersMatchValue(rivalX, y, rivalDir, trgrUp, movedTiles);
+
+                    if (rivalTriggersMatch === TRIGGER_MATCH) {
+                        // если тайл-соперник тоже хочет падать в эту ячейку(x + dir, y + 1),
+                        // и триггер указывает на него,
+                        // значит соперник будет сдвинут.
+                        this.moveTileToSide(this.field[rivalX][y] as BaseTile, rivalDir, movedTiles, tilesMovedToSide);
+                        if (dir === LEFT) {
+                            leftDirTriggerMatch = DENY_FALL_TO_SIDE;
+                        }
+                        continue;
+                    }
+                    else if (rivalTriggersMatch === DENY_FALL_TO_SIDE) {
+                        if (dir === LEFT) {
+                            // если еще не проверили второе направление падения(направо),
+                            // то проверяем
+                            leftDirTriggerMatch = MISMATCH_TRIGGER;
+                            continue;
+                        }
+                        else if (leftDirTriggerMatch === DENY_FALL_TO_SIDE) {
+                            // тайл не может падать влево, но может направо(но триггер не сопадает),
+                            // значит тайл упадет направо, игнорируя триггер
+                            dirToFall = RIGHT;
+                            break;
+                        }
+                        else if (leftDirTriggerMatch === MISMATCH_TRIGGER) {
+                            // Если тайл имеет возможность падать в оба направления(соперников нет),
+                            // но для обоих направлений не соостветствуют триггеры в ячейках,
+                            // значит тайл будет падать влево, игнорируя триггер в левой ячейке.
+                            dirToFall = LEFT;
+                            break;
+                        }
+                    }
+                }
+
+                if (dirToFall !== 0) {
+                    this.moveTileToSide(this.field[x][y] as BaseTile, dirToFall, movedTiles, tilesMovedToSide);
+                }
+            }
+        }
+
+        return tilesMovedToSide;
+    }
+
+    /** Функция дискретного перемещения тайлов на единицу вниз(в т.ч. и вниз-вбок), с учетом других тайлов и особенностей поля. */
+    oneMoveDownTiles() {
+        let movedTiles: TilesSet = {}
+
+        let needRepeat;
+        do {
+            needRepeat = false;
+
+            /** Сначала двигаем тайлы вертикально вниз */
+            const movedStrictDown = this.oneMoveStrictDownTiles(movedTiles);
+
+            /** Двигаем вниз-вбок те тайлы, которые не могут падать вертикально вниз */
+            const movedToSide = this.oneMoveDownAndSideTiles(movedTiles);
+            if (Object.keys(movedToSide).length > 0) {
+                needRepeat = true;
+            }
+
+        } while (needRepeat);
+
+        let hasNewTiles = false;
         // рождаем новые тайлы, если в этом есть необходимость
+        const y = 0;
         for (let x = 0; x < this.width; x++) {
-            const tile = this.field[x][0];
+            const tile = this.field[x][y];
             if (tile) {
+                // тайлы не рождаются в ячейках, если в них уже есть другие тайлы
                 continue;
             }
+            const posHash = this.getPosHash(x, y);
+            if (this.blockedCells[posHash]) {
+                // запрещаем рождение тайлов в заблокированные клетки поля
+                continue;
+            }
+
             let color: number;
-            if (this.dropDownTiles[x].length > 0) {
-                color = this.dropDownTiles[x].pop() as number; 
+            const presetColors: number[] | undefined = this.dropDownTiles[posHash];
+            if (presetColors && presetColors.length > 0) {
+                color = presetColors.pop() as number; 
             }
             else {
                 color = this.getRandomColor();
             }
             const newTile = this.createTile(color);
             this.setTileOnField(newTile, x, 0, false, true);
+
+            hasNewTiles = true;
         }
+
+        const hasDownMove = ((Object.keys(movedTiles).length > 0) || hasNewTiles);
         return hasDownMove;
     }
 
@@ -194,11 +517,11 @@ export default class BasePlayField {
             return result;
         }
 
-        /** Дополнительный массив, соразмерный с полем, используется для промежуточных вычислений */
-        const fieldMask: (1 | undefined)[] = Array(this.width * this.height);
+        /** Кэш для ячеек, отмеченных при вычислении группы */
+        const fieldMask: {[posHash: number]: 1} = {};
 
         const W = this.width;
-        fieldMask[y*W + x] = 1;
+        fieldMask[this.getPosHash(x, y)] = OK;
 
         let groupToCheck = [new Pos(x, y)];
 
@@ -212,10 +535,11 @@ export default class BasePlayField {
                     if (!this.isValidPos(newX, newY)) {
                         continue;
                     }
-                    if (fieldMask[newY*W + newX]) {
+                    const newPosHash = this.getPosHash(newX, newY);
+                    if (fieldMask[newPosHash]) {
                         continue;
                     }
-                    fieldMask[newY*W + newX] = 1; // делаем метку на поле, что эту ячейку мы уже проверили
+                    fieldMask[newPosHash] = OK; // Запоминаем, что эту ячейку мы уже проверили
                     const tile = this.field[newX][newY];
                     if (!tile || (tile.color != targetColor)) {
                         continue;
@@ -249,5 +573,10 @@ export default class BasePlayField {
         group.forEach(pos => {
             this.field[pos.x][pos.y] = null;
         })
+    }
+
+    /** Хэширует двумерный целочисленный вектор в скаляр. */
+    getPosHash(x: number, y: number): number {
+        return y * this.width + x;
     }
 }

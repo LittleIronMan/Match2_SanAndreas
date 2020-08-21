@@ -1,11 +1,12 @@
 import BasePlayField from './BasePlayField';
 import Pos from "./Pos";
-import { TILE_WIDTH, TILE_HEIGHT, EMPTY_CELL, ANY_COLOR } from './Constants';
+import { TILE_WIDTH, TILE_HEIGHT, EMPTY_CELL, ANY_COLOR, BLOCKED_CELL } from './Constants';
 import PlayField from './PlayField';
 
 const fieldParams = {width: 3, height: 3, countColors: 4};
-const X = EMPTY_CELL;
+const _ = EMPTY_CELL;
 const A = ANY_COLOR;
+const BB = BLOCKED_CELL; // Почему BB? Потому что в массивах более заметно.
 
 type EqualsFunc<T> = (val: T, anotherVal: T) => boolean;
 function WithEqualsMethod<T>(equalsFunc?: EqualsFunc<T>) {
@@ -30,14 +31,14 @@ export function testAll(): boolean {
         f.initWith([
             [ 3, 3, 1],
             [ 4, 2, 1],
-            [ X, X, X]
+            [ _, _, _]
         ]);
         const TileColor = WithEqualsMethod<number>();
         function colorOfTile(x: number, y: number): InstanceType<typeof TileColor> {
             let color: number;
             let tile = f.field[x][y];
             if (!tile) {
-                color = X;
+                color = EMPTY_CELL;
             }
             else {
                 color = tile.color;
@@ -51,46 +52,48 @@ export function testAll(): boolean {
         results.push(   colorOfTile(0,1).equals(4)   );
         results.push(   colorOfTile(1,1).equals(2)   );
         results.push(   colorOfTile(2,1).equals(1)   );
-        results.push(   colorOfTile(0,2).equals(X)   );
-        results.push(   colorOfTile(1,2).equals(X)   );
-        results.push(   colorOfTile(2,2).equals(X)   );
+        results.push(   colorOfTile(0,2).equals(_)   );
+        results.push(   colorOfTile(1,2).equals(_)   );
+        results.push(   colorOfTile(2,2).equals(_)   );
 
         return results;
     }});
 
     testList.push({name: "Strike #1", func: () => {
         const f = new BasePlayField(fieldParams);
+        const T = 2; // Target color
         f.initWith([
             [ 3, 3, 1],
-            [ 4, 2, 1],
-            [ 4, 2, 3]
+            [ 4, T, 1],
+            [ 4, T, 3]
         ]);
         f.strikeTo(1, 1);
         return f.equals([
             [ 3, 3, 1],
-            [ 4, X, 1],
-            [ 4, X, 3]
+            [ 4, _, 1],
+            [ 4, _, 3]
         ]);
     }});
 
     testList.push({name: "Strike #2", func: () => {
         const f = new BasePlayField({width: 6, height: 6, countColors: 4});
+        const T = 1; // Target color
         f.initWith([
-            [ A, A, 3, 1, 4, A],
-            [ 4, 2, 2, 1, 3, 2],
-            [ 1, 1, 1, 1, 1, 1],
-            [ 1, 4, 1, 2, 4, 1],
-            [ 1, 3, 1, 1, 1, 1],
-            [ 1, 1, 1, 3, 3, 1],
+            [ A, A, 3, T, 4, A],
+            [ 4, 2, 2, T, 3, 2],
+            [ T, T, T, T, T, T],
+            [ T, 4, T, 2, 4, T],
+            [ T, 3, T, T, T, T],
+            [ T, T, T, 3, 3, T],
         ]);
         f.strikeTo(2, 2);
         return f.equals([
-            [ A, A, 3, X, 4, A],
-            [ 4, 2, 2, X, 3, 2],
-            [ X, X, X, X, X, X],
-            [ X, 4, X, 2, 4, X],
-            [ X, 3, X, X, X, X],
-            [ X, X, X, 3, 3, X],
+            [ A, A, 3, _, 4, A],
+            [ 4, 2, 2, _, 3, 2],
+            [ _, _, _, _, _, _],
+            [ _, 4, _, 2, 4, _],
+            [ _, 3, _, _, _, _],
+            [ _, _, _, 3, 3, _],
         ]);
     }});
 
@@ -99,7 +102,7 @@ export function testAll(): boolean {
         f.initWith([
             [ 3, 3, 1],
             [ 4, 2, 1],
-            [ X, X, X]
+            [ _, _, _]
         ]);
         f.oneMoveDownTiles();
         return f.equals([
@@ -114,7 +117,7 @@ export function testAll(): boolean {
         f.initWith([
             [ 3, 3, 1],
             [ 4, 2, 1],
-            [ 1, X, X]
+            [ 1, _, _]
         ]);
         f.oneMoveDownTiles();
         return f.equals([
@@ -122,6 +125,71 @@ export function testAll(): boolean {
             [ 4, 3, 1],
             [ 1, 2, 1]
         ]);
+    }});
+
+    testList.push({name: "Move #3", func: () => {
+        const f = new BasePlayField(fieldParams);
+        f.initWith([
+            [BB,BB,BB],
+            [ 4, 2, 1],
+            [ 1, _, _]
+        ]);
+        f.oneMoveDownTiles();
+        return f.equals([
+            [BB,BB,BB],
+            [ 4, _, _],
+            [ 1, 2, 1]
+        ]);
+    }});
+
+    testList.push({name: "Move #4", func: () => {
+        const f = new BasePlayField({width: 6, height: 6, countColors: 4});
+        const results: boolean[] = [];
+        f.initWith([
+            [ 3, A, 4, A, A, A],
+            [ 1,BB, 2, A, A, A],
+            [BB, 3,BB,BB, 3, A],
+            [ 4, _, _,BB, 2, A],
+            [ _, _, _, 1, A, A],
+            [ _, _, _, A, A, A],
+        ]);
+        f.oneMoveDownTiles();
+        results.push(f.equals([
+            [ A, A, 4, A, A, A],
+            [ 3,BB, 2, A, A, A],
+            [BB, 1,BB,BB, A, A],
+            [ _, 3, _,BB, 3, A],
+            [ 4, _, _, 2, A, A],
+            [ _, _, 1, A, A, A],
+        ]));
+        f.oneMoveDownTiles();
+        results.push(f.equals([
+            [ A, A, A, A, A, A],
+            [ 3,BB, 4, A, A, A],
+            [BB, 2,BB,BB, A, A],
+            [ _, 1, _,BB, 3, A],
+            [ _, 3, _, 2, A, A],
+            [ 4, _, 1, A, A, A],
+        ]));
+        f.oneMoveDownTiles();
+        results.push(f.equals([
+            [ A, A, A, A, A, A],
+            [ A,BB, 4, A, A, A],
+            [BB, 3,BB,BB, A, A],
+            [ _, 2, _,BB, 3, A],
+            [ _, 1, _, 2, A, A],
+            [ 4, 3, 1, A, A, A],
+        ]));
+        f.oneMoveDownTiles();
+        results.push(f.equals([
+            [ A, A, A, A, A, A],
+            [ A,BB, A, A, A, A],
+            [BB, 4,BB,BB, A, A],
+            [ _, 2, 3,BB, 3, A],
+            [ _, 1, _, 2, A, A],
+            [ 4, 3, 1, A, A, A],
+        ]));
+        return results;
     }});
 
     const scenePos = cc.v2;

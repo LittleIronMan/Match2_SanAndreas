@@ -69,7 +69,7 @@ export default class SceneGameplay extends cc.Component {
     private readonly progressBarMoveDuration: number = 0.5;
 
     /**
-     * Подсчет количества очков за выбранную юзером группу фишек.
+     * Подсчет количества очков за выбранную юзером группу тайлов.
      * Должен быть передан хотябы один из двух аргументов.
      */
     static getPointsForGroup(group: Pos[] | undefined, groupLen?: number) {
