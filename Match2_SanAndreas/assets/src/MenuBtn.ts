@@ -10,8 +10,8 @@ export default class MenuBtn extends cc.Component {
     @property(cc.Node)
     area: cc.Node = null as any;
 
-    @property(cc.Node)
-    label: cc.Node = null as any;
+    @property(cc.Label)
+    label: cc.Label = null as any;
 
     @property([cc.Component.EventHandler])
     events: cc.Component.EventHandler[] = [];
@@ -39,14 +39,14 @@ export default class MenuBtn extends cc.Component {
 
         this.area.on('mouseenter', () => {
             this.playSound("hover");
-            this.label.color = MENU_BUTTON_MOUSE_HOVER_COLOR;
+            this.label.node.color = MENU_BUTTON_MOUSE_HOVER_COLOR;
         });
         this.area.on('mouseleave', () => {
-            this.label.color = cc.Color.WHITE;
+            this.label.node.color = cc.Color.WHITE;
         });
         this.area.on(cc.Node.EventType.TOUCH_END, (event: cc.Event.EventTouch) => {
             this.events.forEach(e => {
-                e.emit([]);
+                e.emit([e.customEventData]);
             })
             this.playSound("click");
         });

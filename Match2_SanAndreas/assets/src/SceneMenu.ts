@@ -2,8 +2,12 @@ import g from "./FirstClickDetector";
 import gameConfig from "./GameConfig";
 import SettingsItem from "./SettingsItem";
 import cache from "./Cache";
+import MenuBtn from "./MenuBtn";
+import { debugLevels } from "./DebugLevels";
 
 const {ccclass, property} = cc._decorator;
+
+const MENU_ITEM_HEIGHT = 60;
 
 @ccclass
 export default class SceneMenu extends cc.Component {
@@ -15,10 +19,17 @@ export default class SceneMenu extends cc.Component {
 
     @property(cc.Node)
     menuButtons: cc.Node = null as any;
+
+    @property(cc.Node)
+    levelsList: cc.Node = null as any;
+    @property(MenuBtn)
+    levelsItem: MenuBtn = null as any;
+
     @property(cc.Node)
     settingsPanel: cc.Node = null as any;
     @property(cc.Node)
     settingsItem: cc.Node = null as any;
+
     @property(cc.Node)
     loading: cc.Node = null as any;
 
@@ -26,10 +37,24 @@ export default class SceneMenu extends cc.Component {
         console.log("Click PLAY");
         cc.director.loadScene("Gameplay.fire");
     }
+    onClickLevels() {
+        console.log("Click LEVELS");
+        this.levelsList.active = true;
+        this.menuButtons.active = false;
+    }
     onClickSettings() {
         console.log("Click SETTINGS");
         this.settingsPanel.active = true;
         this.menuButtons.active = false;
+    }
+
+    closeLevelsList() {
+        this.levelsList.active = false;
+        this.menuButtons.active = true;
+    }
+    closeSettings() {
+        this.settingsPanel.active = false;
+        this.menuButtons.active = true;
     }
 
     onLoad() {
@@ -82,6 +107,26 @@ export default class SceneMenu extends cc.Component {
             this.loading.active = false;
             this.menuButtons.active = true;
         });
+
+        let yOffset = debugLevels.length * MENU_ITEM_HEIGHT / 2;
+        debugLevels.forEach((level, idx) => {
+            const n = cc.instantiate(this.levelsItem.node);
+            n.active = true;
+            const lvl = n.getComponent(MenuBtn);
+            lvl.label.string = level.name;
+
+			var handler = new cc.Component.EventHandler();
+			handler.target = this.node;
+			handler.component = SceneMenu.name;
+            handler.handler = "onSelectLevel";
+            handler.customEventData = idx.toString();
+
+            lvl.events.push(handler);
+
+            this.levelsList.addChild(n);
+            n.setPosition(0, yOffset);
+            yOffset -= MENU_ITEM_HEIGHT;
+        });
     }
 
     onFirstTap(event: cc.Event.EventTouch) {
@@ -96,9 +141,12 @@ export default class SceneMenu extends cc.Component {
         gameConfig[item.prop] = newValue;
         item.value.string = newValue.toString();
     }
-    closeSettings() {
-        console.log("Click CLOSE");
-        this.settingsPanel.active = false;
-        this.menuButtons.active = true;
+
+    onSelectLevel(event: cc.Event, levelIdxStr: string) {
+        const levelIdx = +levelIdxStr;
+
+        gameConfig.customLevel = debugLevels[levelIdx];
+
+        cc.director.loadScene("Gameplay.fire");
     }
 }

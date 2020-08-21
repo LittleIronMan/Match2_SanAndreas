@@ -22,7 +22,8 @@ export default class SceneGameplay extends cc.Component {
 
     touchStartTile: Tile | null = null;
 
-    playField = new PlayField({width: gameConfig.N, height: gameConfig.M, countColors: gameConfig.C});
+    playField: PlayField = null as any;
+    initPlayField:() => void = null as any;
 
     levelParams = {
         turnsLimit: C.LEVEL_TURNS_LIMIT,
@@ -68,6 +69,134 @@ export default class SceneGameplay extends cc.Component {
 
     private readonly minProgressBarWidth: number = 88;
     private readonly progressBarMoveDuration: number = 0.5;
+
+    onLoad() {
+        const testsSuccess = testAll();
+        if (!testsSuccess) {
+            return;
+        }
+
+        let fail = false;
+        const Props = ["fieldPlace",
+            "tilesPrefab",
+            "progressBar",
+            "turnsLeftLabel",
+            "pointsLabel",
+            "goalValueLabel",
+            "levelClose",
+            "levelCloseBg",
+            "levelCloseFail",
+            "levelCloseSuccess",
+            "levelCloseTapToContinue",
+            "pauseMenu",
+            "pauseBg",
+        ] as const;
+        Props.forEach(prop => {
+            if (!this[prop]) {
+                console.log(`SceneGameplay.${prop} not defined`);
+                fail = true;
+            }
+        })
+        if (fail) { return; }
+
+        if (gameConfig.customLevel) {
+            const props = gameConfig.customLevel.fieldProps;
+            const arr = gameConfig.customLevel.field;
+            this.playField = new PlayField(props);
+
+            this.initPlayField = () => {
+                this.playField.initWith(arr);
+            }
+
+            gameConfig.customLevel = undefined;
+        }
+        else {
+            this.playField = new PlayField({width: gameConfig.N, height: gameConfig.M, countColors: gameConfig.C});
+            this.initPlayField = () => {
+                this.playField.randomInit();
+            }
+        }
+
+        this.levelCloseBg.on(cc.Node.EventType.TOUCH_START, (event: cc.Event.EventTouch) => {
+            if (this.tapToContinueAction) {
+                this.tapToContinueAction();
+            }
+            event.stopPropagation();
+        });
+        this.pauseBg.on(cc.Node.EventType.TOUCH_START, (event: cc.Event.EventTouch) => {
+            event.stopPropagation();
+        });
+
+        this.updateGameplayUI(true);
+
+        // сначала загружаем ресурсы
+        this.fieldPlace.opacity = 0;
+
+        cache.loadAll()
+        // и только потом создаем поле
+        .then(_ => {
+            this.fieldPlace.addChild(this.playField.node);
+
+            // заполняем поле тайлами
+            this.playField.tilesPrefab = this.tilesPrefab;
+            this.initPlayField();
+
+            // корректируем размер поля
+            const w = this.fieldPlace.width = this.playField.width * C.TILE_WIDTH + C.FIELD_HORIZONTAL_PADDING;
+            const h = this.fieldPlace.height = this.playField.height * C.TILE_HEIGHT + C.FIELD_VERTICAL_PADDING;
+            const maxW = this.fieldPlace.parent.width - C.FIELD_EX_CONTAINER_PADDING;
+            const maxH = this.fieldPlace.parent.height - C.FIELD_EX_CONTAINER_PADDING;
+            let scaleW = 1, scaleH = 1;
+            if (w > maxW) { scaleW = maxW / w; }
+            if (h > maxH) { scaleH = maxH / h; }
+            this.fieldPlace.scale = Math.min(scaleW, scaleH);
+
+            this.fieldPlace.on(cc.Node.EventType.TOUCH_START, (event: cc.Event.EventTouch) => {
+                // блокируем тачи во время падений и анимаций на игровом поле
+                if (this.playField.hasActionsOnField()) {
+                    return;
+                }
+                const fieldPos = this.playField.scenePosToFieldPos(event.touch.getLocation());
+                this.touchStartTile = this.playField.getTileAt(fieldPos.x, fieldPos.y);
+        
+                //event.stopPropagation();
+            });
+
+            this.fieldPlace.on(cc.Node.EventType.TOUCH_MOVE, (event: cc.Event.EventTouch) => {
+            });
+
+            this.fieldPlace.on(cc.Node.EventType.TOUCH_END, (event: cc.Event.EventTouch) => {
+                if (!g.firstClickDetected) {
+                    g.firstClickDetected = true;
+                }
+
+                if (this.playField.hasActionsOnField()) {
+                    this.touchStartTile = null;
+                    return;
+                }
+
+                const fieldPos = this.playField.scenePosToFieldPos(event.touch.getLocation());
+                const tile = this.playField.getTileAt(fieldPos.x, fieldPos.y);
+
+                if (tile && (tile === this.touchStartTile)) {
+                    this.clickOnTile(tile);
+                }
+
+                this.touchStartTile = null;
+            });
+
+            this.initCompleted = true;
+            const FIELD_APPEAR_TIME = 0.3;
+            cc.tween(this.fieldPlace).to(FIELD_APPEAR_TIME, {opacity: 255}).start();
+        });
+    }
+
+    update(dt: number) {
+        if (!this.initCompleted) {
+            return;
+        }
+        this.playField.moveTiles(dt);
+    }
 
     /**
      * Подсчет количества очков за выбранную юзером группу тайлов.
@@ -251,114 +380,7 @@ export default class SceneGameplay extends cc.Component {
         }
     }
 
-    onLoad() {
-        const testsSuccess = testAll();
-        if (!testsSuccess) {
-            return;
-        }
 
-        let fail = false;
-        const Props = ["fieldPlace",
-            "tilesPrefab",
-            "progressBar",
-            "turnsLeftLabel",
-            "pointsLabel",
-            "goalValueLabel",
-            "levelClose",
-            "levelCloseBg",
-            "levelCloseFail",
-            "levelCloseSuccess",
-            "levelCloseTapToContinue",
-            "pauseMenu",
-            "pauseBg",
-        ] as const;
-        Props.forEach(prop => {
-            if (!this[prop]) {
-                console.log(`SceneGameplay.${prop} not defined`);
-                fail = true;
-            }
-        })
-        if (fail) { return; }
-
-        this.levelCloseBg.on(cc.Node.EventType.TOUCH_START, (event: cc.Event.EventTouch) => {
-            if (this.tapToContinueAction) {
-                this.tapToContinueAction();
-            }
-            event.stopPropagation();
-        });
-        this.pauseBg.on(cc.Node.EventType.TOUCH_START, (event: cc.Event.EventTouch) => {
-            event.stopPropagation();
-        });
-
-        this.updateGameplayUI(true);
-
-        // сначала загружаем ресурсы
-        this.fieldPlace.opacity = 0;
-
-        cache.loadAll()
-        // и только потом создаем поле
-        .then(_ => {
-            this.fieldPlace.addChild(this.playField.node);
-
-            // заполняем поле тайлами
-            this.playField.tilesPrefab = this.tilesPrefab;
-            this.playField.randomInit();
-
-            // корректируем размер поля
-            const w = this.fieldPlace.width = gameConfig.N * C.TILE_WIDTH + C.FIELD_HORIZONTAL_PADDING;
-            const h = this.fieldPlace.height = gameConfig.M * C.TILE_HEIGHT + C.FIELD_VERTICAL_PADDING;
-            const maxW = this.fieldPlace.parent.width - C.FIELD_EX_CONTAINER_PADDING;
-            const maxH = this.fieldPlace.parent.height - C.FIELD_EX_CONTAINER_PADDING;
-            let scaleW = 1, scaleH = 1;
-            if (w > maxW) { scaleW = maxW / w; }
-            if (h > maxH) { scaleH = maxH / h; }
-            this.fieldPlace.scale = Math.min(scaleW, scaleH);
-
-            this.fieldPlace.on(cc.Node.EventType.TOUCH_START, (event: cc.Event.EventTouch) => {
-                // блокируем тачи во время падений и анимаций на игровом поле
-                if (this.playField.hasActionsOnField()) {
-                    return;
-                }
-                const fieldPos = this.playField.scenePosToFieldPos(event.touch.getLocation());
-                this.touchStartTile = this.playField.getTileAt(fieldPos.x, fieldPos.y);
-        
-                //event.stopPropagation();
-            });
-
-            this.fieldPlace.on(cc.Node.EventType.TOUCH_MOVE, (event: cc.Event.EventTouch) => {
-            });
-
-            this.fieldPlace.on(cc.Node.EventType.TOUCH_END, (event: cc.Event.EventTouch) => {
-                if (!g.firstClickDetected) {
-                    g.firstClickDetected = true;
-                }
-
-                if (this.playField.hasActionsOnField()) {
-                    this.touchStartTile = null;
-                    return;
-                }
-
-                const fieldPos = this.playField.scenePosToFieldPos(event.touch.getLocation());
-                const tile = this.playField.getTileAt(fieldPos.x, fieldPos.y);
-
-                if (tile && (tile === this.touchStartTile)) {
-                    this.clickOnTile(tile);
-                }
-
-                this.touchStartTile = null;
-            });
-
-            this.initCompleted = true;
-            const FIELD_APPEAR_TIME = 0.3;
-            cc.tween(this.fieldPlace).to(FIELD_APPEAR_TIME, {opacity: 255}).start();
-        });
-    }
-    update(dt: number) {
-        if (!this.initCompleted) {
-            return;
-        }
-        this.playField.moveTiles(dt);
-    }
 
     finishLevel(success: boolean) {
         let label: cc.Node;

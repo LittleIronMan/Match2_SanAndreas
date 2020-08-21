@@ -1,4 +1,4 @@
-import BasePlayField, { SetOnFieldOptions } from "./BasePlayField";
+import BasePlayField, { SetOnFieldOptions, FieldProps } from "./BasePlayField";
 import Pos from "./Pos";
 import BaseTile, { TileType } from "./BaseTile";
 import { TILE_HEIGHT, TILE_WIDTH, ANY_COLOR } from "./Constants";
@@ -30,8 +30,8 @@ export default class PlayField extends BasePlayField {
         return this.tilesFallDetected || this.tilesKillDetected;
     }
 
-    constructor(args: {width: number, height: number, countColors: number}) {
-        super(args);
+    constructor(props: FieldProps) {
+        super(props);
         this.node = new cc.Node();
         this.moveManager = new TilesMoveManager(this);
     }

@@ -1,4 +1,5 @@
 import * as C from "./Constants";
+import { LevelConfig } from "./LevelConfig";
 
 class GameConfig {
     /** ширина поля(в тайлах) */
@@ -14,6 +15,8 @@ class GameConfig {
     K = C.MIN_TILES_GROUP_DEFAULT;
 
     groupSizeForBomb = C.GROUP_SIZE_FOR_BOMB_DEFAULT;
+
+    customLevel?: LevelConfig;
 }
 
 var gameConfig = new GameConfig();

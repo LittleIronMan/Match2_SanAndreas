@@ -6,6 +6,12 @@ import Pos from "./Pos";
 
 type Dir = (typeof RIGHT | typeof LEFT);
 
+export interface FieldProps {
+    width: number;
+    height: number;
+    countColors: number;
+}
+
 export interface SetOnFieldOptions {
     onInit?: true,
     onDrop?: true,
@@ -62,7 +68,7 @@ export default class BasePlayField {
      * @param height высота поля
      * @param countColors максимальное кол-во различных цветов тайлов на поле
      */
-    constructor({width, height, countColors}: {width: number, height: number, countColors: number}) {
+    constructor({width, height, countColors}: FieldProps) {
         this.width = width;
         this.height = height;
         this.countColors = countColors;
