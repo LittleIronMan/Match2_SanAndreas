@@ -1,6 +1,6 @@
 import Pos from "./Pos";
 
-export enum TileType { SIMPLE, BOMB };
+export enum TileType { SIMPLE, BOMB, BLOCK };
 
 /** Базовый класс для тайлов */
 export default class BaseTile {

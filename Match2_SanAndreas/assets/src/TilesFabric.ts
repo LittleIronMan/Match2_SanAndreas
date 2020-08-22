@@ -33,6 +33,15 @@ export default class TilesFabric {
 
             t.grenade.active = true;
         }
+        else if (type === TileType.BLOCK) {
+            t.frame.active = false;
+            t.glass.active = false;
+            t.avatar.node.active = false;
+
+            t.stoneWall.active = true;
+            t.stoneWall.opacity = 100;
+            t.node.zIndex = -1;
+        }
 
         newTile.renderTile = t;
 

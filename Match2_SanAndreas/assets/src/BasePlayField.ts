@@ -145,6 +145,10 @@ export default class BasePlayField {
                 else if (color === C.BLOCKED_CELL) {
                     const posHash = this.getPosHash(x, y);
                     this.blockedCells[posHash] = OK;
+
+                    const newTile = this.createTile(TileType.BLOCK, color);
+                    this.setTileOnField(newTile, x, y, {onInit: true});
+                    this.setTileOnField(null, x, y);
                 }
                 else if (color === C.BOMB_COLOR) {
                     const bomb = this.createTile(TileType.BOMB, color);
