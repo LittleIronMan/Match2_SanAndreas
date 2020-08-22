@@ -129,9 +129,9 @@ export default class SceneGameplay extends cc.Component {
 
         this.updateGameplayUI(true);
 
-        // сначала загружаем ресурсы
         this.fieldPlace.opacity = 0;
 
+        // сначала загружаем ресурсы
         cache.loadAll()
         // и только потом создаем поле
         .then(_ => {

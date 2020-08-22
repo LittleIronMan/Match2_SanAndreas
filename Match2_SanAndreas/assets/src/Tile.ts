@@ -1,6 +1,6 @@
 import BaseTile, { TileType } from "./BaseTile";
 import TileRender from "./TileRender";
-import { TILES_ACCELERATION, TILES_MAX_SPEED } from "./Constants";
+import { TILES_ACCELERATION, TILES_MAX_SPEED, ALPHA_MAX } from "./Constants";
 
 export default class Tile extends BaseTile {
     /** @description Ссылка на нод, который рендерит тайл на сцене */
@@ -11,6 +11,9 @@ export default class Tile extends BaseTile {
 
     /** @description Общее время падения столбца */
     fallTime: number = 0;
+
+    /** траектория перемещения тайла */
+    trajectory: cc.Vec2[] = [];
 
     /**
      * @description Считает скорость движения тайлов в столбце, исходя из общего времени падения fallTime.
@@ -29,6 +32,13 @@ export default class Tile extends BaseTile {
     /** @description Движется ли тайл, или нет. */
     isMove(): boolean {
         return this.fallTime > 0;
+    }
+
+    resetDroppedFlag() {
+        if (this.isDropped) {
+            this.isDropped = false;
+            this.renderTile.node.opacity = ALPHA_MAX;
+        }
     }
 
     constructor(type: TileType, color: number) {

@@ -2,11 +2,14 @@ import BasePlayField from './BasePlayField';
 import Pos from "./Pos";
 import { TILE_WIDTH, TILE_HEIGHT, EMPTY_CELL, ANY_COLOR, BLOCKED_CELL } from './Constants';
 import PlayField from './PlayField';
+import TilesMoveManager from './TilesMoveManager';
 
 const fieldParams = {width: 3, height: 3, countColors: 4};
 const _ = EMPTY_CELL;
 const A = ANY_COLOR;
 const BB = BLOCKED_CELL; // Почему BB? Потому что в массивах более заметно.
+
+const EPSILON = 0.01;
 
 type EqualsFunc<T> = (val: T, anotherVal: T) => boolean;
 function WithEqualsMethod<T>(equalsFunc?: EqualsFunc<T>) {
@@ -142,6 +145,7 @@ export function testAll(): boolean {
         ]);
     }});
 
+    // тест диагональных падений
     testList.push({name: "Move #4", func: () => {
         const f = new BasePlayField({width: 6, height: 6, countColors: 4});
         const results: boolean[] = [];
@@ -198,7 +202,6 @@ export function testAll(): boolean {
     testList.push({name: "Position convert #1", func: () => {
         const f = new PlayField(fieldParams);
 
-        const EPSILON = 0.01;
         const ScenePos = WithEqualsMethod<cc.Vec2>((selfPos: cc.Vec2, anotherPos: cc.Vec2) => {
             return cc.Vec2.equals(selfPos, anotherPos, EPSILON);
         })
@@ -225,6 +228,74 @@ export function testAll(): boolean {
         results.push(   convert(scenePos(0.25*TILE_WIDTH, 0.25*TILE_HEIGHT)) .equal(fieldPos(1,1))   );
         results.push(   convert(scenePos(-0.25*TILE_WIDTH, -0.25*TILE_HEIGHT)) .equal(fieldPos(1,1))   );
         results.push(   convert(scenePos(-TILE_WIDTH, TILE_HEIGHT)) .equal(fieldPos(0,0))   );
+
+        return results;
+    }});
+
+    // проверяем установку флага targetPosUpdated (когда deltaMove больше длины первого учатстка траектории)
+    testList.push({name: "Tiles move #1", func: () => {
+        const results: boolean[] = [];
+
+        const initPos = cc.v2(0, 0);
+        const path = [
+            cc.v2(1, 1),
+            cc.v2(2, 0)
+        ];
+        const deltaMove = 2;
+
+        const moveResult = TilesMoveManager.updateTilePos(initPos, path, deltaMove);
+
+        results.push(   moveResult.posUpdated   );
+        results.push(   moveResult.targetPosUpdated   );
+        results.push(   !moveResult.needNewTarget   );
+        const q2 = Math.sqrt(2);
+        results.push(   cc.Vec2.equals(moveResult.pos, cc.v2(q2, 2 - q2), EPSILON)   );
+        results.push(   path.length === 1   );
+
+        return results;
+    }});
+
+    // проверяем установку флага needNewTarget (когда deltaMove больше длины ВСЕЙ траектории)
+    testList.push({name: "Tiles move #2", func: () => {
+        const results: boolean[] = [];
+
+        const initPos = cc.v2(0, 0);
+        const path = [
+            cc.v2(1, 1),
+            cc.v2(2, 0)
+        ];
+        const deltaMove = 3;
+
+        const moveResult = TilesMoveManager.updateTilePos(initPos, path, deltaMove);
+
+        results.push(   moveResult.posUpdated   );
+        results.push(   moveResult.targetPosUpdated   );
+        results.push(   moveResult.needNewTarget   );
+        results.push(   cc.Vec2.equals(moveResult.pos, cc.v2(2, 0))   );
+        results.push(   path.length === 0   );
+
+        return results;
+    }});
+
+    // проверяем функцию обновления позиции в её штатном режиме
+    testList.push({name: "Tiles move #3", func: () => {
+        const results: boolean[] = [];
+
+        const initPos = cc.v2(0, 0);
+        const path = [
+            cc.v2(1, 1),
+            cc.v2(2, 0)
+        ];
+        const deltaMove = 0.5;
+
+        const moveResult = TilesMoveManager.updateTilePos(initPos, path, deltaMove);
+
+        results.push(   moveResult.posUpdated   );
+        results.push(   !moveResult.targetPosUpdated   );
+        results.push(   !moveResult.needNewTarget   );
+        const q = 0.5 / Math.sqrt(2);
+        results.push(   cc.Vec2.equals(moveResult.pos, cc.v2(q, q), EPSILON)   );
+        results.push(   path.length === 2   );
 
         return results;
     }});

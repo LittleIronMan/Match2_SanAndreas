@@ -33,7 +33,7 @@ export default class PlayField extends BasePlayField {
     constructor(props: FieldProps) {
         super(props);
         this.node = new cc.Node();
-        this.moveManager = new TilesMoveManager(this);
+        this.moveManager = new TilesMoveManager();
     }
 
     /**
@@ -55,19 +55,21 @@ export default class PlayField extends BasePlayField {
      * @param tile Тайл(или его отсутствие) для установки на поле
      * @param x Координата X для установке на поле(натуральное число)
      * @param y Координата Y
-     * @param onInit Флаг того, что функция применяется при инициализации поля,
-     * это означает что тайл нужно сразу поместить на целевую позицию
-     * @param onDrop Тайл размещается на поле после "выпадения" сверху, например.
-     * Его нужно разместить чуть выше самого верхнего ряда.
      */
     setTileOnField(tile: Tile | null, x: number, y: number, opts: SetOnFieldOptions = {}) {
         this._setTileOnField(tile, x, y);
+
         if (tile) {
+
+            const pos = this.fieldPosToScenePos(tile.pos);
+
             if (opts.onInit || opts.onDrop || opts.onGenerating) {
+
                 // при инициализации массива тайлов, или при рождении новых тайлов -
                 // устанавливаем их ноды на сцене
-                const pos = this.fieldPosToScenePos(tile.pos);
                 if (opts.onDrop) {
+                    tile.trajectory.push(pos.clone());
+
                     const downTile = this.field[x][1] as Tile;
                     if (downTile && downTile.isDropped) {
                         pos.y = downTile.renderTile.node.y + TILE_HEIGHT;
@@ -79,7 +81,12 @@ export default class PlayField extends BasePlayField {
                     tile.renderTile.node.opacity = 0;
                 }
                 tile.renderTile.node.setPosition(pos);
+
             }
+            else {
+                tile.trajectory.push(pos);
+            }
+
         }
         else {
 
@@ -114,7 +121,7 @@ export default class PlayField extends BasePlayField {
     }
 
     moveTiles(dt: number) {
-        const moveDetected = this.moveManager.moveTiles(dt);
+        const moveDetected = this.moveManager.moveTiles(dt, this);
 
         let newFalls = false;
 

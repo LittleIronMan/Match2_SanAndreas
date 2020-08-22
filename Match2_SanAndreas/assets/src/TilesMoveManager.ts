@@ -1,92 +1,136 @@
-import { TILES_ACCELERATION, TILES_MAX_SPEED, ALPHA_MAX, TILE_HEIGHT } from "./Constants";
+import { TILE_HEIGHT } from "./Constants";
 import PlayField from "./PlayField";
 import Tile from "./Tile";
 import Pos from "./Pos";
 
-export default class TilesMoveManager {
-    fieldRef: PlayField = null as any;
-
-    constructor(field: PlayField) {
-        this.fieldRef = field;
+class UpdatePosResult {
+    posUpdated = false;
+    pos: cc.Vec2;
+    targetPosUpdated = false;
+    needNewTarget = false;
+    constructor(currentPos: cc.Vec2) {
+        this.pos = currentPos;
     }
+}
 
-    moveTiles(dt: number): boolean {
-        const topTileY = this.fieldRef.fieldPosToScenePos(new Pos(0, 0)).y;
+export default class TilesMoveManager {
+
+    moveTiles(dt: number, playField: PlayField): boolean {
+        const topTileY = playField.fieldPosToScenePos(new Pos(0, 0)).y;
 
         let moveDetected = false;
 
-        for (let x = 0; x < this.fieldRef.width; x++) {
+        for (let x = 0; x < playField.width; x++) {
 
-            for (let y = this.fieldRef.height - 1; y >= 0; y--) {
-                const tile = this.fieldRef.field[x][y] as Tile;
+            for (let y = playField.height - 1; y >= 0; y--) {
+
+                const tile = playField.field[x][y] as Tile;
 
                 if (!tile) {
                     continue;
                 }
 
-                const tNode = tile.renderTile.node;
-                const realPos = tNode.getPosition();
-                const targetPos = this.fieldRef.fieldPosToScenePos(tile.pos);
-
-                let tileIsMove = false;
-
-                // тайл движется тогда, когда не равны его целевая и текущая позиции
-                if (!realPos.equals(targetPos)) {
-
-                    tileIsMove = true;
-                    tile.fallTime += dt;
-
-                    let nextTilePos: cc.Vec2;
-                    // Если после перемещения тайла с его текущей скорость
-                    // он(тайл) перелетит свою целевую позицию,
-                    // то ставим тайл на целевую позицию (т.е. останавливаем его движение).
-                    // При этом устанавливаем флаг пересчета дискретных(а значит и целевых) позиций тайлов
-                    const nextY = realPos.y - (tile.getSpeed() * dt);
-
-                    if (nextY <= targetPos.y) {
-                        nextTilePos = targetPos;
-                        // #todo анимация остановки тайла
-                        this.fieldRef.needCheckTilesFall = true;
-
-                        if (tile.isDropped) {
-                            tile.isDropped = false;
-                            tNode.opacity = ALPHA_MAX;
-                        }
-                    }
-                    else {
-                        nextTilePos = cc.v2(realPos.x, nextY);
-                        // если же в этом фрейме тайл еще НЕ перелетает целевую позицию,
-                        // но перелетит её в следующем фрейме - это также значит, что пора пересчитать целевые позиции тайлов
-                        const nextNextY = nextY - (tile.getSpeed(dt) * dt);
-
-                        if (nextNextY <= targetPos.y) {
-                            this.fieldRef.needCheckTilesFall = true;
-                        }
-
-                        if (tile.isDropped) {
-                            // обновляем величину прозрачности для новорожденных тайлов
-                            if (realPos.y <= topTileY) {
-                                tile.isDropped = false;
-                                tNode.opacity = ALPHA_MAX;
-                            }
-
-                            if ((realPos.y > topTileY) && (realPos.y < (topTileY + TILE_HEIGHT))) {
-                                tNode.opacity = (1 - (realPos.y - topTileY) / TILE_HEIGHT) * 255;
-                            }
-                        }
-                    }
-                    tNode.setPosition(nextTilePos);
-                }
-
-                if (tileIsMove) {
-                    moveDetected = true;
-                }
-                else {
+                if (tile.trajectory.length === 0) {
                     tile.fallTime = 0;
+                    continue;
                 }
+
+                const tNode = tile.renderTile.node;
+
+                tile.fallTime += dt;
+
+                const deltaMove = tile.getSpeed() * dt;
+                const moveResult = TilesMoveManager.updateTilePos(tNode.getPosition(), tile.trajectory, deltaMove);
+
+                if (moveResult.needNewTarget) {
+                    playField.needCheckTilesFall = true;
+                }
+
+                if (moveResult.targetPosUpdated) {
+                    tile.resetDroppedFlag();
+                }
+
+                if (moveResult.posUpdated) {
+                    tNode.setPosition(moveResult.pos);
+                    moveDetected = true;
+
+                    if (tile.isDropped) {
+                        // обновляем величину прозрачности для новорожденных тайлов
+                        if ((moveResult.pos.y > topTileY) && (moveResult.pos.y < (topTileY + TILE_HEIGHT))) {
+                            tNode.opacity = (1 - (moveResult.pos.y - topTileY) / TILE_HEIGHT) * 255;
+                        }
+                    }
+                }
+
+                if (!moveResult.needNewTarget) {
+                    // если же в этом фрейме тайл еще НЕ достигает конца траектории,
+                    // но достигнет его в следующем фрейме - это также значит, что пора пересчитать целевые позиции тайлов
+
+                    const nextDeltaMove = tile.getSpeed(dt) * dt;
+                    const nextMoveResult = TilesMoveManager.updateTilePos(moveResult.pos, [...tile.trajectory], nextDeltaMove);
+
+                    if (nextMoveResult.needNewTarget) {
+                        playField.needCheckTilesFall = true;
+                    }
+                }
+
             }
         }
 
         return moveDetected;
+    }
+
+    static updateTilePos(currentPos: cc.Vec2, path: cc.Vec2[], deltaMove: number): UpdatePosResult {
+        const result = new UpdatePosResult(currentPos.clone());
+
+        do {
+            if (path.length === 0) {
+                result.needNewTarget = true;
+                break;
+            }
+
+            let targetPos = path[0];
+
+            const {restDist, deltaMoveV} = TilesMoveManager.getRestDist(result.pos, targetPos, deltaMove);
+            if (restDist <= 0) {
+                result.pos.set(targetPos);
+                result.posUpdated = true;
+
+                // назначаем тайлу следующую точку траектории
+                path.shift();
+                result.targetPosUpdated = true;
+
+                // restDist переносим на следующий участок траектории
+                deltaMove = -restDist;
+
+                continue;
+            }
+
+            result.pos.addSelf(deltaMoveV);
+            result.posUpdated = true;
+
+            break;
+
+        } while (true);
+
+        return result;
+    }
+
+    /**
+     * Возвращает расстояние от тайла до его до целевой позиции ПОСЛЕ перемещения на заданную величину.
+     * Результат может быть отрицательной величиной, что означает перелет.
+     */
+    static getRestDist(realPos: cc.Vec2, targetPos: cc.Vec2, deltaMove: number): { restDist: number, deltaMoveV: cc.Vec2} {
+        /** вектор расстояния от текущей позиции до целевой */
+        const deltaPos = targetPos.sub(realPos);
+
+        /** направление движения */
+        const moveDir = deltaPos.normalize();
+        /** вектор перемещения в текущем фрейме */
+        const deltaMoveV = moveDir.mul(deltaMove);
+
+        const restDist = deltaPos.sub(deltaMoveV).dot(moveDir);
+
+        return {restDist, deltaMoveV};
     }
 }
