@@ -9,7 +9,7 @@ import gameConfig from "./GameConfig";
 import * as C from "./Constants";
 import { TileType } from "./BaseTile";
 
-const {ccclass, property} = cc._decorator;
+const { ccclass, property } = cc._decorator;
 
 /**
  * @class
@@ -42,7 +42,7 @@ export default class SceneGameplay extends cc.Component {
 
     playField: PlayField = null as any;
 
-    initPlayField:() => void = null as any;
+    initPlayField: () => void = null as any;
 
     levelParams: {
         turnsLimit: number,
@@ -141,7 +141,7 @@ export default class SceneGameplay extends cc.Component {
             gameConfig.customLevel = undefined;
         }
         else {
-            this.playField = new PlayField({width: gameConfig.N, height: gameConfig.M, countColors: gameConfig.C});
+            this.playField = new PlayField({ width: gameConfig.N, height: gameConfig.M, countColors: gameConfig.C });
             this.initPlayField = () => {
                 this.playField.randomInit();
             }
@@ -239,7 +239,7 @@ export default class SceneGameplay extends cc.Component {
         let result = 0;
         result = (res.killedByTap + res.killedByExpl) * C.ONE_TILE_PRICE;
         // за тайлы, взорванные бомбой, не начисляются дополнительные очки
-        result += (res.killedByTap * res.killedByTap - 4) * C.BIG_TILES_GROUP_MULTIPLIER; 
+        result += (res.killedByTap * res.killedByTap - 4) * C.BIG_TILES_GROUP_MULTIPLIER;
 
         return result;
     }
@@ -258,7 +258,7 @@ export default class SceneGameplay extends cc.Component {
         }
     }
 
-    updateGameplayUI(onInit=false) {
+    updateGameplayUI(onInit = false) {
         const turnsLeft = this.getTurnsLeft();
         this.turnsLeftLabel.string = turnsLeft.toString();
         this.pointsLabel.string = this.userParams.points.toString();
@@ -275,7 +275,7 @@ export default class SceneGameplay extends cc.Component {
             const newWidth = minWidth + (maxWidth - minWidth) * goalProgress;
             this.progressBar.stopAllActions();
             cc.tween(this.progressBar)
-                .to(this.progressBarMoveDuration, {width: newWidth})
+                .to(this.progressBarMoveDuration, { width: newWidth })
                 .start();
         }
     }
@@ -286,9 +286,9 @@ export default class SceneGameplay extends cc.Component {
 
         return new Promise((resolve, reject) => {
             cc.tween(bomb.renderTile.node)
-                .to(BOMB_SHAKING_TIME / 3, {angle: -10})
-                .to(BOMB_SHAKING_TIME / 3, {angle: 10})
-                .to(BOMB_SHAKING_TIME / 3, {angle: 10})
+                .to(BOMB_SHAKING_TIME / 3, { angle: -10 })
+                .to(BOMB_SHAKING_TIME / 3, { angle: 10 })
+                .to(BOMB_SHAKING_TIME / 3, { angle: 10 })
                 .call(() => {
                     resolve();
                 })
@@ -302,7 +302,7 @@ export default class SceneGameplay extends cc.Component {
 
         return new Promise((resolve, reject) => {
             cc.tween(tile.renderTile.node)
-                .to(KILL_TIME, {scale: 0.6, angle: 360, opacity: 0})
+                .to(KILL_TIME, { scale: 0.6, angle: 360, opacity: 0 })
                 .call(() => resolve())
                 .removeSelf()
                 .start();
@@ -419,7 +419,7 @@ export default class SceneGameplay extends cc.Component {
                     if (group.length >= gameConfig.groupSizeForBomb) {
 
                         let bomb = this.playField.createTile(TileType.BOMB) as Tile;
-                        this.playField.setTileOnField(bomb, x, y, {onGenerating: true});
+                        this.playField.setTileOnField(bomb, x, y, { onGenerating: true });
 
                         const bombNode = bomb.renderTile.node;
                         bombNode.opacity = 0;
@@ -428,7 +428,7 @@ export default class SceneGameplay extends cc.Component {
 
                         return new Promise((resolve, reject) => {
                             cc.tween(bomb.renderTile.node)
-                                .to(0.3, {opacity: 255, scale: 1, angle: 0})
+                                .to(0.3, { opacity: 255, scale: 1, angle: 0 })
                                 .call(() => {
                                     resolve();
                                 })
@@ -478,10 +478,10 @@ export default class SceneGameplay extends cc.Component {
         }
 
         const DARK_BG_FADE_TIME = 2;
-        cc.tween(this.levelCloseBg).to(DARK_BG_FADE_TIME, {opacity: 255}).start();
+        cc.tween(this.levelCloseBg).to(DARK_BG_FADE_TIME, { opacity: 255 }).start();
 
         const RESULT_LABEL_APPEAR_TIME = 0.5;
-        cc.tween(label).to(RESULT_LABEL_APPEAR_TIME, {opacity: 255}).start();
+        cc.tween(label).to(RESULT_LABEL_APPEAR_TIME, { opacity: 255 }).start();
 
         const TAP_TO_CONTINUE_DELAY_TIME = 1.5;
         const TAP_TO_CONTINUE_BLINK_TIME = 0.5;
@@ -495,7 +495,7 @@ export default class SceneGameplay extends cc.Component {
                     cc.director.loadScene("Menu.fire");
                 };
             })
-            .to(TAP_TO_CONTINUE_BLINK_TIME, {opacity: 255})
+            .to(TAP_TO_CONTINUE_BLINK_TIME, { opacity: 255 })
             .call(() => {
                 cc.tween(tapTo)
                 .sequence(

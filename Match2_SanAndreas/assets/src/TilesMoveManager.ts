@@ -96,7 +96,7 @@ export default class TilesMoveManager {
 
             let targetPos = path[0];
 
-            const {restDist, deltaMoveV} = TilesMoveManager.getRestDist(result.pos, targetPos, deltaMove);
+            const { restDist, deltaMoveV } = TilesMoveManager.getRestDist(result.pos, targetPos, deltaMove);
             if (restDist <= 0) {
                 result.pos.setPos(targetPos);
                 result.posUpdated = true;
@@ -125,7 +125,7 @@ export default class TilesMoveManager {
      * Возвращает расстояние от тайла до его до целевой позиции ПОСЛЕ перемещения на заданную величину.
      * Результат может быть отрицательной величиной, что означает перелет.
      */
-    static getRestDist(realPos: Pos, targetPos: Pos, deltaMove: number): { restDist: number, deltaMoveV: Pos} {
+    static getRestDist(realPos: Pos, targetPos: Pos, deltaMove: number): { restDist: number, deltaMoveV: Pos } {
         /** вектор расстояния от текущей позиции до целевой */
         const deltaPos = targetPos.toV2().sub(realPos.toV2());
 
@@ -136,6 +136,6 @@ export default class TilesMoveManager {
 
         const restDist = deltaPos.sub(deltaMoveV).dot(moveDir);
 
-        return {restDist, deltaMoveV: new Pos(deltaMoveV.x, deltaMoveV.y)};
+        return { restDist, deltaMoveV: new Pos(deltaMoveV.x, deltaMoveV.y) };
     }
 }

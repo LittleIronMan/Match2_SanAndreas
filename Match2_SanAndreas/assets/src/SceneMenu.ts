@@ -5,7 +5,7 @@ import cache from "./Cache";
 import MenuBtn from "./MenuBtn";
 import { debugLevels } from "./DebugLevels";
 
-const {ccclass, property} = cc._decorator;
+const { ccclass, property } = cc._decorator;
 
 const MENU_ITEM_HEIGHT = 60;
 
@@ -99,10 +99,10 @@ export default class SceneMenu extends cc.Component {
 
             node.parent = this.settingsPanel;
         }
-        initConfigItem({prop: "N", desc: "ширина поля", minValue: 2, maxValue: 20, yPos: 70});
-        initConfigItem({prop: "M", desc: "высота поля", minValue: 2, maxValue: 20, yPos: 0});
-        initConfigItem({prop: "C", desc: "кол-во цветов", minValue: 2, maxValue: 6, yPos: -70});
-        initConfigItem({prop: "K", desc: "MIN группа", minValue: 2, maxValue: 5, yPos: -140});
+        initConfigItem({ prop: "N", desc: "ширина поля", minValue: 2, maxValue: 20, yPos: 70 });
+        initConfigItem({ prop: "M", desc: "высота поля", minValue: 2, maxValue: 20, yPos: 0 });
+        initConfigItem({ prop: "C", desc: "кол-во цветов", minValue: 2, maxValue: 6, yPos: -70 });
+        initConfigItem({ prop: "K", desc: "MIN группа", minValue: 2, maxValue: 5, yPos: -140 });
 
         this.loading.active = true;
         this.menuButtons.active = false;
@@ -119,9 +119,9 @@ export default class SceneMenu extends cc.Component {
             const lvl = n.getComponent(MenuBtn);
             lvl.label.string = level.name;
 
-			var handler = new cc.Component.EventHandler();
-			handler.target = this.node;
-			handler.component = "SceneMenu";
+            var handler = new cc.Component.EventHandler();
+            handler.target = this.node;
+            handler.component = "SceneMenu";
             handler.handler = "onSelectLevel";
             handler.customEventData = idx.toString();
 

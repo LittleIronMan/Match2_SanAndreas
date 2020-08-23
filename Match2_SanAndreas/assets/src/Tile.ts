@@ -31,7 +31,7 @@ export default class Tile extends BaseTile {
      * @returns Cкорость тайлов в столбце
      * @public
      */
-    getSpeed(futureDt=0): number {
+    getSpeed(futureDt = 0): number {
         let speed = TILES_ACCELERATION * (this.fallTime + futureDt);
         speed = Math.min(speed, TILES_MAX_SPEED);
         return speed;

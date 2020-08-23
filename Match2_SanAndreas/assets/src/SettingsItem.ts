@@ -1,4 +1,4 @@
-const {ccclass, property} = cc._decorator;
+const { ccclass, property } = cc._decorator;
 
 const MAX_VALUE_DEFAULT = 10;
 const MIN_VALUE_DEFAULT = 1;

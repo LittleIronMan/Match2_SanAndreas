@@ -7,7 +7,7 @@ class GameConfig {
 
     /** Высота поля */
     M = C.FIELD_HEIGHT_DEFAULT;
-    
+
     /** Количество цветов */
     C = C.MAX_COLORS_ON_FIELD_DEFAULT;
 

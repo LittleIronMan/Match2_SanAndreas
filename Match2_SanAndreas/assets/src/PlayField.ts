@@ -117,7 +117,7 @@ export default class PlayField extends BasePlayField {
 
         return pos.clone();
     }
-    private _mem1: {[hash: number]: cc.Vec2} = {}
+    private _mem1: { [hash: number]: cc.Vec2 } = {}
 
     /**
      * @param scenePos "Пиксельная" позиция тайла на сцене

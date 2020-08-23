@@ -37,10 +37,10 @@ export interface SetOnFieldOptions {
     onGenerating?: true
 }
 
-type PosHashMap<T> = {[posHash: number]: T};
+type PosHashMap<T> = { [posHash: number]: T };
 type TilesSet = PosHashMap<BaseTile>;
 
-const FOUR_SIDES = [{x: LEFT, y: 0}, {x: RIGHT, y: 0}, {x: 0, y: DOWN}, {x: 0, y: UP}];
+const FOUR_SIDES = [{ x: LEFT, y: 0 }, { x: RIGHT, y: 0 }, { x: 0, y: DOWN }, { x: 0, y: UP }];
 
 
 const DEFAULT_TRIGGER = LEFT;
@@ -71,7 +71,7 @@ export default class BasePlayField {
     field: (BaseTile | null)[][];
 
     /** Множество предустановленных тайлов, выпадающих из точек рождения */
-    dropDownTiles: {[posHash: number]: number[]} = {};
+    dropDownTiles: { [posHash: number]: number[] } = {};
 
     /** Множество заблокированных клеток поля */
     blockedCells: PosHashMap<1> = {};
@@ -82,14 +82,14 @@ export default class BasePlayField {
      * то это означает что рекомендуется падение в эту ячейку ИЗ ЛЕВОГО столбца, при прочих равных.
      * Используется для чередования падений вбок в некоторые ячейки.
      */
-    fallToSideTriggers: {[posHash: number]: Dir} = {};
+    fallToSideTriggers: { [posHash: number]: Dir } = {};
 
     /**
      * @param width ширина поля(в тайлах, т.е. натуральное число)
      * @param height высота поля
      * @param countColors максимальное кол-во различных цветов тайлов на поле
      */
-    constructor({width, height, countColors}: FieldProps) {
+    constructor({ width, height, countColors }: FieldProps) {
         this.width = width;
         this.height = height;
         this.countColors = countColors;
@@ -157,7 +157,7 @@ export default class BasePlayField {
                 if (color > 0) {
 
                     const newTile = this.createTile(TileType.SIMPLE, color);
-                    this.setTileOnField(newTile, x, y, {onInit: true});
+                    this.setTileOnField(newTile, x, y, { onInit: true });
 
                 }
                 else if (color === C.BLOCKED_CELL) {
@@ -166,14 +166,14 @@ export default class BasePlayField {
                     this.blockedCells[posHash] = OK;
 
                     const newTile = this.createTile(TileType.BLOCK, color);
-                    this.setTileOnField(newTile, x, y, {onInit: true});
+                    this.setTileOnField(newTile, x, y, { onInit: true });
                     this.setTileOnField(null, x, y);
 
                 }
                 else if (color === C.BOMB_TAG) {
 
                     const bomb = this.createTile(TileType.BOMB, color);
-                    this.setTileOnField(bomb, x, y, {onInit: true});
+                    this.setTileOnField(bomb, x, y, { onInit: true });
                 }
 
             }
@@ -232,7 +232,7 @@ export default class BasePlayField {
             for (let y = 0; y < this.height; y++) {
                 const color = this.getRandomColor();
                 const newTile = this.createTile(TileType.SIMPLE, color);
-                this.setTileOnField(newTile, x, y, {onInit: true});
+                this.setTileOnField(newTile, x, y, { onInit: true });
             }
         }
     }
@@ -560,13 +560,13 @@ export default class BasePlayField {
             let color: number;
             const presetColors: number[] | undefined = this.dropDownTiles[posHash];
             if (presetColors && presetColors.length > 0) {
-                color = presetColors.pop() as number; 
+                color = presetColors.pop() as number;
             }
             else {
                 color = this.getRandomColor();
             }
             const newTile = this.createTile(TileType.SIMPLE, color);
-            this.setTileOnField(newTile, x, 0, {onDrop: true});
+            this.setTileOnField(newTile, x, 0, { onDrop: true });
 
             hasNewTiles = true;
         }
@@ -596,7 +596,7 @@ export default class BasePlayField {
         }
 
         /** Кэш для ячеек, отмеченных при вычислении группы */
-        const fieldMask: {[posHash: number]: 1} = {};
+        const fieldMask: { [posHash: number]: 1 } = {};
 
         const W = this.width;
         fieldMask[this.getPosHash(x, y)] = OK;
@@ -698,7 +698,7 @@ export default class BasePlayField {
                 if (!victim) {
                     continue;
                 }
-                
+
                 explosion.push(victim.pos);
             }
         }
