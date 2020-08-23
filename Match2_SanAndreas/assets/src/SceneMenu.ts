@@ -37,11 +37,13 @@ export default class SceneMenu extends cc.Component {
         console.log("Click PLAY");
         cc.director.loadScene("Gameplay.fire");
     }
+
     onClickLevels() {
         console.log("Click LEVELS");
         this.levelsList.active = true;
         this.menuButtons.active = false;
     }
+
     onClickSettings() {
         console.log("Click SETTINGS");
         this.settingsPanel.active = true;
@@ -52,6 +54,7 @@ export default class SceneMenu extends cc.Component {
         this.levelsList.active = false;
         this.menuButtons.active = true;
     }
+
     closeSettings() {
         this.settingsPanel.active = false;
         this.menuButtons.active = true;
@@ -103,6 +106,7 @@ export default class SceneMenu extends cc.Component {
 
         this.loading.active = true;
         this.menuButtons.active = false;
+
         cache.loadAll().then(_ => {
             this.loading.active = false;
             this.menuButtons.active = true;

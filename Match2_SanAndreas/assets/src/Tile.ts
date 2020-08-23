@@ -4,14 +4,18 @@ import { TILES_ACCELERATION, TILES_MAX_SPEED, ALPHA_MAX } from "./Constants";
 import Pos from "./Pos";
 import PlayField from "./PlayField";
 
+/**
+ * @class
+ * @classdesc Класс для тайлов, которые умеют рендериться и передвигаться по полю
+ */
 export default class Tile extends BaseTile {
-    /** @description Ссылка на нод, который рендерит тайл на сцене */
+    /** Ссылка на нод, который рендерит тайл на сцене */
     renderTile: TileRender;
 
-    /** @description Тайл только что выпала с неба, еще появляется */
+    /** Тайл только что выпала с неба, еще появляется */
     isDropped = false;
 
-    /** @description Общее время падения столбца */
+    /** Общее время падения столбца */
     fallTime: number = 0;
 
     /** траектория перемещения тайла */
@@ -20,11 +24,11 @@ export default class Tile extends BaseTile {
     private _realPos: Pos = null as any;
 
     /**
-     * @description Считает скорость движения тайлов в столбце, исходя из общего времени падения fallTime.
-     * @param futureDt {number} Если передать аргумент futureDt,
+     * Считает скорость движения тайлов в столбце, исходя из общего времени падения fallTime.
+     * @param futureDt Если передать аргумент futureDt,
      * то эта величина времени прибавляется к fallTime,
      * тем самым рассчитывается "будущая" скорость.
-     * @returns {number} Cкорость тайлов в столбце
+     * @returns Cкорость тайлов в столбце
      * @public
      */
     getSpeed(futureDt=0): number {

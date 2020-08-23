@@ -1,19 +1,20 @@
 import * as C from "./Constants";
-import { LevelConfig } from "./LevelConfig";
+import LevelConfig from "./LevelConfig";
 
 class GameConfig {
-    /** ширина поля(в тайлах) */
+    /** Ширина поля(в тайлах) */
     N = C.FIELD_WIDTH_DEFAULT;
 
-    /** высота поля */
+    /** Высота поля */
     M = C.FIELD_HEIGHT_DEFAULT;
     
-    /** количество цветов */
+    /** Количество цветов */
     C = C.MAX_COLORS_ON_FIELD_DEFAULT;
 
-    /** минимальный размер группы */
+    /** Минимальный размер группы */
     K = C.MIN_TILES_GROUP_DEFAULT;
 
+    /** Минимальный размер группы, начиная с которой из группы будет создана бомба */
     groupSizeForBomb = C.GROUP_SIZE_FOR_BOMB_DEFAULT;
 
     customLevel?: LevelConfig;

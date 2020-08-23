@@ -12,6 +12,10 @@ class UpdatePosResult {
     }
 }
 
+/**
+ * @class
+ * @classdesc Вспомогательный класс, ответственный за перемещение тайлов по полю
+ */
 export default class TilesMoveManager {
 
     moveTiles(dt: number, playField: PlayField): boolean {
@@ -20,7 +24,6 @@ export default class TilesMoveManager {
         let moveDetected = false;
 
         for (let x = 0; x < playField.width; x++) {
-
             for (let y = playField.height - 1; y >= 0; y--) {
 
                 const tile = playField.field[x][y] as Tile;

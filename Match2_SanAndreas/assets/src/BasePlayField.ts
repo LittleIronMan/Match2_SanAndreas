@@ -7,8 +7,13 @@ import Pos from "./Pos";
 type Dir = (typeof RIGHT | typeof LEFT);
 
 export interface FieldProps {
+    /** ширина поля(в тайлах) */
     width: number;
+
+    /** высота поля(в тайлах) */
     height: number;
+
+    /** максимальное количество различных цветов тайлов на поле */
     countColors: number;
 }
 
@@ -25,10 +30,13 @@ export interface SetOnFieldOptions {
      */
     onDrop?: true,
 
+    /**
+     * Тайл размещается при его создании по ходу игры,
+     * как, например, супер-тайлы.
+     */
     onGenerating?: true
 }
 
-/** Тип для множества уникальных дискретных позиций */
 type PosHashMap<T> = {[posHash: number]: T};
 type TilesSet = PosHashMap<BaseTile>;
 
@@ -42,12 +50,15 @@ const MISMATCH_TRIGGER = 1;
 const TRIGGER_MATCH = 2;
 enum TriggersMatchValue { DENY_FALL_TO_SIDE = 0, MISMATCH_TRIGGER = 1, TRIGGER_MATCH = 1 };
 
-/** Базовый класс для игрового поля */
+/**
+ * @class
+ * @classdesc Базовый класс для игрового поля
+ */
 export default class BasePlayField {
     /** Ширина поля(в тайлах) */
     width: number;
 
-    /** Высота поля */
+    /** Высота поля(в тайлах) */
     height: number;
 
     /** Максимальное количество различных цветов тайлов на поле */
@@ -83,6 +94,7 @@ export default class BasePlayField {
         this.height = height;
         this.countColors = countColors;
         this.field = Array(width);
+
         for (let x = 0; x < width; x++) {
             this.field[x] = Array(height);
             for (let y = 0; y < height; y++) {
@@ -102,13 +114,16 @@ export default class BasePlayField {
 
     protected _setTileOnField(tile: BaseTile | null, x: number, y: number) {
         const oldTile = this.field[x][y]; // старый тайл на том месте, на которое мы хотим поставить новый тайл
+
         if (oldTile) {
             oldTile.onField = false;
         }
+
         if (tile && tile.onField && !tile.pos.equals(x, y)) {
             // убираем новый тайл с его предыдущего места
             this.field[tile.pos.x][tile.pos.y] = null;
         }
+
         // устанавливаем тайл на новое место
         this.field[x][y] = tile;
         if (tile) {
@@ -134,35 +149,43 @@ export default class BasePlayField {
         for (let x = 0; x < this.width; x++) {
             for (let y = 0; y < this.height; y++) {
                 let color = arr[y][x];
+
                 if (color == C.ANY_COLOR) {
                     color = this.getRandomColor();
                 }
+
                 if (color > 0) {
+
                     const newTile = this.createTile(TileType.SIMPLE, color);
                     this.setTileOnField(newTile, x, y, {onInit: true});
+
                 }
                 else if (color === C.BLOCKED_CELL) {
+
                     const posHash = this.getPosHash(x, y);
                     this.blockedCells[posHash] = OK;
 
                     const newTile = this.createTile(TileType.BLOCK, color);
                     this.setTileOnField(newTile, x, y, {onInit: true});
                     this.setTileOnField(null, x, y);
+
                 }
                 else if (color === C.BOMB_TAG) {
+
                     const bomb = this.createTile(TileType.BOMB, color);
                     this.setTileOnField(bomb, x, y, {onInit: true});
                 }
+
             }
         }
     }
 
     /**
-     * (Для тестов) Сравнивает цвета тайлов на поле с соответствующими числами массива,
-     * если число равно 0 - подразумевается пустая клетка, если -1 - значит не сравниваем
+     * (Для тестов) Сравнивает цвета тайлов на поле с соответствующими числами массива.
      */
     equals(arr: number[][]) {
         let mismatchFound = false;
+
         for (let x = 0; x < this.width; x++) {
             for (let y = 0; y < this.height; y++) {
                 const testValue = arr[y][x];
@@ -174,13 +197,16 @@ export default class BasePlayField {
                 const tile = this.field[x][y];
 
                 if (!tile) {
+
                     if (testValue === C.EMPTY_CELL) {
                         continue;
                     }
+
                     const posHash = this.getPosHash(x, y);
                     if (testValue === C.BLOCKED_CELL && this.blockedCells[posHash]) {
                         continue;
                     }
+
                     mismatchFound = true; break;
                 }
 
@@ -266,6 +292,7 @@ export default class BasePlayField {
         // в столбце из тайлов(без пустот и блокираторов) может упасть вбок только один тайл(самый верхний)
         // код ниже проверяет это условие
         for (const movedTile of Object.values(movedTiles)) {
+
             if ((movedTile.prevPos.x === tile.pos.x) && (movedTile.prevPos.x !== movedTile.pos.x)) {
                 // нашелся сдвинутый вниз-вбок тайл из этого-же столбца
 
@@ -276,10 +303,12 @@ export default class BasePlayField {
                     for (let yTop = tile.pos.y - 1; yTop > movedTile.prevPos.y; yTop--) {
                         // если между этими тайлами есть пустые клетки - снимаем запрет
                         let midTile = this.field[tile.pos.x][yTop];
+
                         if (!midTile) {
                             denyFall = false;
                             break;
                         }
+
                         // также снимаем запрет, если между этими тайлами есть блокиратор
                         const topPosHash = this.getPosHash(x, yTop);
                         if (this.blockedCells[topPosHash]) {
@@ -310,6 +339,7 @@ export default class BasePlayField {
         for (let y = this.height - 2; y >= 0; y--) {
             for (let x = 0; x < this.width; x++) {
                 const posHash = this.getPosHash(x, y);
+
                 if (movedTiles[posHash]) {
                     continue;
                 }
@@ -401,6 +431,7 @@ export default class BasePlayField {
 
                 // для каждого тайла проверяем возможность падать вниз-вбок слева направо
                 for (const dir of [LEFT, RIGHT] as Dir[]) {
+
                     let trgrUp = this.fallToSideTriggers[this.getPosHash(x + dir, y + 1)];
                     if (!trgrUp) {
                         trgrUp = DEFAULT_TRIGGER;
@@ -415,16 +446,19 @@ export default class BasePlayField {
                     }
 
                     if (triggerMatch === DENY_FALL_TO_SIDE) {
+
                         if (dir === LEFT) {
                             // тайл не может падать влево, проверяем правое направление
                             leftDirTriggerMatch = DENY_FALL_TO_SIDE;
                             continue;
+
                         }
                         else if (leftDirTriggerMatch === MISMATCH_TRIGGER) {
                             // тайл не может падать направо, но может налево(но триггер не сопадает),
                             // значит тайл упадет налево, игнорируя триггер
                             dirToFall = LEFT;
                             break;
+
                         }
                         else {
                             // тайл не может падать ни влево, ни направо
@@ -446,23 +480,29 @@ export default class BasePlayField {
                         // и триггер указывает на него,
                         // значит соперник будет сдвинут.
                         this.moveTileToSide(this.field[rivalX][y] as BaseTile, rivalDir, movedTiles, tilesMovedToSide);
+
                         if (dir === LEFT) {
                             leftDirTriggerMatch = DENY_FALL_TO_SIDE;
                         }
+
                         continue;
+
                     }
                     else if (rivalTriggersMatch === DENY_FALL_TO_SIDE) {
+
                         if (dir === LEFT) {
                             // если еще не проверили второе направление падения(направо),
                             // то проверяем
                             leftDirTriggerMatch = MISMATCH_TRIGGER;
                             continue;
+
                         }
                         else if (leftDirTriggerMatch === DENY_FALL_TO_SIDE) {
                             // тайл не может падать влево, но может направо(но триггер не сопадает),
                             // значит тайл упадет направо, игнорируя триггер
                             dirToFall = RIGHT;
                             break;
+
                         }
                         else if (leftDirTriggerMatch === MISMATCH_TRIGGER) {
                             // Если тайл имеет возможность падать в оба направления(соперников нет),
@@ -542,7 +582,12 @@ export default class BasePlayField {
         return true;
     }
 
-    /** Возвращает группу смежных тайлов того-же цвета, что и в выбранной ячейке. */
+    /**
+     * @param x Координата X выбранной ячейки
+     * @param y Координата Y выбранной ячейки
+     * @param targetColor Цвет выбранной ячейки
+     * @returns Группа смежных тайлов того-же цвета, что и в выбранной ячейке.
+     */
     findGroup(x: number, y: number, targetColor: number): Pos[] {
         const result: Pos[] = [];
 
@@ -559,24 +604,35 @@ export default class BasePlayField {
         let groupToCheck = [new Pos(x, y)];
 
         while (groupToCheck.length > 0) {
+
             const nextGroup: Pos[] = [];
+
             for (const pos of groupToCheck) {
+
                 result.push(pos);
+
                 for (const delta of FOUR_SIDES) {
+
                     const newX = pos.x + delta.x;
                     const newY = pos.y + delta.y;
+
                     if (!this.isValidPos(newX, newY)) {
                         continue;
                     }
+
                     const newPosHash = this.getPosHash(newX, newY);
+
                     if (fieldMask[newPosHash]) {
                         continue;
                     }
+
                     fieldMask[newPosHash] = OK; // Запоминаем, что эту ячейку мы уже проверили
                     const tile = this.field[newX][newY];
+
                     if (!tile || (tile.color != targetColor)) {
                         continue;
                     }
+
                     nextGroup.push(new Pos(newX, newY));
                 }
             }
@@ -591,17 +647,21 @@ export default class BasePlayField {
      * Эта группа уничтожается с поля.
      */
     strikeTo(x: number, y: number) {
+
         if (!this.isValidPos(x, y)) {
             return;
         }
+
         const tile = this.field[x][y];
         if (!tile) {
             return;
         }
+
         const group = this.findGroup(x, y, tile.color);
         if (group.length < gameConfig.K) {
             return;
         }
+
         // уничтожаем группу тайлов на поле
         group.forEach(pos => {
             this.field[pos.x][pos.y] = null;
@@ -613,6 +673,7 @@ export default class BasePlayField {
         return y * this.width + x;
     }
 
+    /** Возвращает зону поражения от взрыва бомбы */
     getExplAreaForBomb(x: number, y: number): Pos[] {
 
         const explosion: Pos[] = [];

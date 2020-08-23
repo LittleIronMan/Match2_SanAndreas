@@ -11,7 +11,10 @@ import { TileType } from "./BaseTile";
 
 const {ccclass, property} = cc._decorator;
 
-/** Результаты(последствия) некого хода пользователя */
+/**
+ * @class
+ * @classdesc Результаты(последствия) некого хода пользователя
+ */
 class TurnResults {
     /** Количество фишек, уничтоженных как группа соседних фишек */
     killedByTap = 0;
@@ -32,11 +35,13 @@ export default class SceneGameplay extends cc.Component {
 
     @property(TileRender)
     tilesPrefab: TileRender = null as any;
+
     initCompleted = false;
 
     touchStartTile: Tile | null = null;
 
     playField: PlayField = null as any;
+
     initPlayField:() => void = null as any;
 
     levelParams: {
@@ -148,6 +153,7 @@ export default class SceneGameplay extends cc.Component {
             }
             event.stopPropagation();
         });
+
         this.pauseBg.on(cc.Node.EventType.TOUCH_START, (event: cc.Event.EventTouch) => {
             event.stopPropagation();
         });
@@ -259,6 +265,7 @@ export default class SceneGameplay extends cc.Component {
 
         const goalProgress = this.getUserGoalProgress();
         const minWidth = this.minProgressBarWidth;
+
         if (onInit) {
             this.progressBar.width = minWidth;
             this.goalValueLabel.string = this.levelParams.goal.toString();
@@ -445,11 +452,10 @@ export default class SceneGameplay extends cc.Component {
         }
     }
 
-
-
     finishLevel(success: boolean) {
         let label: cc.Node;
         let hideLabel: cc.Node;
+
         if (success) {
             label = this.levelCloseSuccess;
             hideLabel = this.levelCloseFail;
@@ -458,6 +464,7 @@ export default class SceneGameplay extends cc.Component {
             label = this.levelCloseFail;
             hideLabel = this.levelCloseSuccess;
         }
+
         hideLabel.active = false;
 
         label.active = true;
@@ -480,6 +487,7 @@ export default class SceneGameplay extends cc.Component {
         const TAP_TO_CONTINUE_BLINK_TIME = 0.5;
         const tapTo = this.levelCloseTapToContinue;
         tapTo.opacity = 0;
+
         cc.tween(tapTo)
             .delay(TAP_TO_CONTINUE_DELAY_TIME)
             .call(() => {
@@ -503,9 +511,11 @@ export default class SceneGameplay extends cc.Component {
     pauseGame() {
         this.pauseMenu.active = true;
     }
+
     continueGame() {
         this.pauseMenu.active = false;
     }
+
     exitGame() {
         cc.director.loadScene("Menu.fire");
     }

@@ -35,6 +35,7 @@ export const ANY_COLOR = -1;
 /** Тег заблокированной ячейки поля */
 export const BLOCKED_CELL = -2;
 
+/** Тег бомбы на поле */
 export const BOMB_TAG = -3;
 
 
@@ -45,4 +46,5 @@ export const DEFAULT_VOLUME = 0.3;
 export const ONE_TILE_PRICE = 50;
 /** Коэффициент квадратичного члена в формуле начисления очков */
 export const BIG_TILES_GROUP_MULTIPLIER = 10;
+/** Ограничение ходов на уровне */
 export const LEVEL_TURNS_LIMIT = 20;

@@ -8,12 +8,14 @@ const { ccclass, property } = cc._decorator;
 export default class MenuBtn extends cc.Component {
 
     @property(cc.Node)
+    /** Зона, в которой действует кнопка */
     area: cc.Node = null as any;
 
     @property(cc.Label)
     label: cc.Label = null as any;
 
     @property([cc.Component.EventHandler])
+    /** Обработчики нажатия на кнопку */
     events: cc.Component.EventHandler[] = [];
 
     playSound(sound: string) {
@@ -41,9 +43,11 @@ export default class MenuBtn extends cc.Component {
             this.playSound("hover");
             this.label.node.color = MENU_BUTTON_MOUSE_HOVER_COLOR;
         });
+
         this.area.on('mouseleave', () => {
             this.label.node.color = cc.Color.WHITE;
         });
+
         this.area.on(cc.Node.EventType.TOUCH_END, (event: cc.Event.EventTouch) => {
             this.events.forEach(e => {
                 e.emit([e.customEventData]);

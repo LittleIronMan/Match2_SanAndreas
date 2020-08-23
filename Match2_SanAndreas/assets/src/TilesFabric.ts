@@ -19,21 +19,26 @@ export default class TilesFabric {
         const t = cc.instantiate(prefab.node).getComponent(TileRender);
 
         if (type === TileType.SIMPLE) {
+
             const gConf = SAN_ANDREAS_GANGS_CONFIG[color - 1];
             const fileName = "gangs/" + gConf.name
                 + (Math.floor(Math.random() * gConf.avatars) + 1) + ".png";
             t.frame.color = cc.color().fromHEX(gConf.color);
             t.glass.color = cc.color().fromHEX(gConf.color);
             t.avatar.spriteFrame = cc.loader.getRes(fileName, cc.SpriteFrame);
+
         }
         else if (type === TileType.BOMB) {
+
             t.frame.active = false;
             t.glass.active = false;
             t.avatar.node.active = false;
 
             t.grenade.active = true;
+
         }
         else if (type === TileType.BLOCK) {
+
             t.frame.active = false;
             t.glass.active = false;
             t.avatar.node.active = false;
@@ -41,6 +46,7 @@ export default class TilesFabric {
             t.stoneWall.active = true;
             t.stoneWall.opacity = 100;
             t.node.zIndex = -1;
+
         }
 
         newTile.renderTile = t;

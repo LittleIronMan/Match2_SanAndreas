@@ -13,17 +13,20 @@ import TilesMoveManager from "./TilesMoveManager";
  */
 export default class PlayField extends BasePlayField {
     node: cc.Node;
+
+    /** Префаб для создания тайлов */
     tilesPrefab: TileRender = null as any;
 
-    /** флаг того, что необходимо пересчитать дискретные позиции тайлов */
+    /** Флаг того, что необходимо пересчитать дискретные позиции тайлов */
     needCheckTilesFall = false;
 
-    /** флаг того, что на поле активна анимация уничтожения тайлов */
+    /** Флаг того, что на поле активна анимация уничтожения тайлов */
     tilesKillDetected = false;
 
-    /** флаг того, что тайлы на поле в данный момент двигаются */
+    /** Флаг того, что тайлы на поле в данный момент двигаются */
     tilesFallDetected = false;
 
+    /** Менеджер перемещения тайлов по полю */
     moveManager: TilesMoveManager = null as any;
 
     hasActionsOnField(): boolean {
@@ -38,7 +41,8 @@ export default class PlayField extends BasePlayField {
 
     /**
      * Перегруженная фабрика, для создания "реальных" тайлов.
-     * @param color {number} Цвет тайла - натуральное число <= C(кол-ву цветов на поле)
+     * @param type Тип тайла, обязательный аргумент
+     * @param color Цвет тайла - натуральное число <= C(кол-ву цветов на поле)
      * @returns Новый объект реального тайла
      * @public
      */
@@ -55,6 +59,7 @@ export default class PlayField extends BasePlayField {
      * @param tile Тайл(или его отсутствие) для установки на поле
      * @param x Координата X для установке на поле(натуральное число)
      * @param y Координата Y
+     * @param opts Дополнительная информация об установке тайла на поле
      */
     setTileOnField(tile: Tile | null, x: number, y: number, opts: SetOnFieldOptions = {}) {
         this._setTileOnField(tile, x, y);
