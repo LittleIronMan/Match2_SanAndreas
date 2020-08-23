@@ -101,14 +101,13 @@ export default class BasePlayField {
     }
 
     protected _setTileOnField(tile: BaseTile | null, x: number, y: number) {
+        const oldTile = this.field[x][y]; // старый тайл на том месте, на которое мы хотим поставить новый тайл
+        if (oldTile) {
+            oldTile.onField = false;
+        }
         if (tile && tile.onField && !tile.pos.equals(x, y)) {
-            // убираем тайл с его старого места
+            // убираем новый тайл с его предыдущего места
             this.field[tile.pos.x][tile.pos.y] = null;
-            const oldTile = this.field[x][y]; // старый тайл на том месте, на которое мы хотим поставить новый тайл
-            if (oldTile) {
-                // по-хорошему - такой ситуации не должно быть
-                oldTile.onField = false;
-            }
         }
         // устанавливаем тайл на новое место
         this.field[x][y] = tile;
@@ -150,7 +149,7 @@ export default class BasePlayField {
                     this.setTileOnField(newTile, x, y, {onInit: true});
                     this.setTileOnField(null, x, y);
                 }
-                else if (color === C.BOMB_COLOR) {
+                else if (color === C.BOMB_TAG) {
                     const bomb = this.createTile(TileType.BOMB, color);
                     this.setTileOnField(bomb, x, y, {onInit: true});
                 }
@@ -612,5 +611,37 @@ export default class BasePlayField {
     /** Хэширует двумерный целочисленный вектор в скаляр. */
     getPosHash(x: number, y: number): number {
         return y * this.width + x;
+    }
+
+    getExplAreaForBomb(x: number, y: number): Pos[] {
+
+        const explosion: Pos[] = [];
+
+        const R = C.BOMB_EXPLOSION_RADIUS;
+
+        for (let dx = -R; dx <= R; dx++) {
+            for (let dy = -R; dy <= R; dy++) {
+
+                if (Math.abs(dx) + Math.abs(dy) > R) {
+                    continue;
+                }
+
+                const xx = x + dx;
+                const yy = y + dy;
+
+                if (!this.isValidPos(xx, yy)) {
+                    continue;
+                }
+
+                const victim = this.field[xx][yy];
+                if (!victim) {
+                    continue;
+                }
+                
+                explosion.push(victim.pos);
+            }
+        }
+
+        return explosion;
     }
 }

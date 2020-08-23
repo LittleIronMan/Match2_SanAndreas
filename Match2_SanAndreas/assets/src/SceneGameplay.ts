@@ -11,6 +11,20 @@ import { TileType } from "./BaseTile";
 
 const {ccclass, property} = cc._decorator;
 
+/** Результаты(последствия) некого хода пользователя */
+class TurnResults {
+    /** Количество фишек, уничтоженных как группа соседних фишек */
+    killedByTap = 0;
+
+    /** Количество фишек, уничтоженных в радиусе взрыва(не считая killedByTap) */
+    killedByExpl = 0;
+
+    add(anotherRes: TurnResults) {
+        this.killedByTap += anotherRes.killedByTap;
+        this.killedByExpl += anotherRes.killedByExpl;
+    }
+}
+
 @ccclass
 export default class SceneGameplay extends cc.Component {
     @property(cc.Node)
@@ -25,15 +39,16 @@ export default class SceneGameplay extends cc.Component {
     playField: PlayField = null as any;
     initPlayField:() => void = null as any;
 
-    levelParams = {
-        turnsLimit: C.LEVEL_TURNS_LIMIT,
-        /** Подразумевается, что каждый ход игрок будет в среднем уничтожать не менее 4-х тайлов */
-        goal: SceneGameplay.getPointsForGroup(undefined, 4) * C.LEVEL_TURNS_LIMIT,
-    };
+    levelParams: {
+        turnsLimit: number,
+        goal: number,
+    } = null as any;
+
     userParams = {
         points: 0,
         turns: 0,
     };
+
     getTurnsLeft(): number {
         return this.levelParams.turnsLimit - this.userParams.turns;
     }
@@ -43,7 +58,6 @@ export default class SceneGameplay extends cc.Component {
 
     @property(cc.Node)
     progressBar: cc.Node = null as any;
-    progressBarTween: cc.Tween | null = null;
     @property(cc.Label)
     turnsLeftLabel: cc.Label = null as any;
     @property(cc.Label)
@@ -69,6 +83,9 @@ export default class SceneGameplay extends cc.Component {
 
     private readonly minProgressBarWidth: number = 88;
     private readonly progressBarMoveDuration: number = 0.5;
+
+    /** звуки взрывчатки */
+    bombExplSound: cc.AudioClip = null as any;
 
     onLoad() {
         const testsSuccess = testAll();
@@ -98,6 +115,14 @@ export default class SceneGameplay extends cc.Component {
             }
         })
         if (fail) { return; }
+
+        const averageTurnResults = new TurnResults();
+        /** Подразумевается, что каждый ход игрок будет в среднем уничтожать не менее 4-х тайлов */
+        averageTurnResults.killedByTap = 4;
+        this.levelParams = {
+            turnsLimit: C.LEVEL_TURNS_LIMIT,
+            goal: SceneGameplay.getPointsForGroup(averageTurnResults) * C.LEVEL_TURNS_LIMIT,
+        };
 
         if (gameConfig.customLevel) {
             const props = gameConfig.customLevel.fieldProps;
@@ -135,6 +160,8 @@ export default class SceneGameplay extends cc.Component {
         cache.loadAll()
         // и только потом создаем поле
         .then(_ => {
+            this.bombExplSound = cc.loader.getRes("sounds/grenade");
+
             this.fieldPlace.addChild(this.playField.node);
 
             // заполняем поле тайлами
@@ -202,20 +229,18 @@ export default class SceneGameplay extends cc.Component {
      * Подсчет количества очков за выбранную юзером группу тайлов.
      * Должен быть передан хотябы один из двух аргументов.
      */
-    static getPointsForGroup(group: Pos[] | undefined, groupLen?: number, afterBomb = false) {
+    static getPointsForGroup(res: TurnResults) {
         let result = 0;
-        const len = (group ? group.length : groupLen as number);
-        result = len * C.ONE_TILE_PRICE;
-        // за бомбу не начисляются дополнительные очки
-        if (!afterBomb) {
-            result += (len * len - 4) * C.BIG_TILES_GROUP_MULTIPLIER; 
-        }
+        result = (res.killedByTap + res.killedByExpl) * C.ONE_TILE_PRICE;
+        // за тайлы, взорванные бомбой, не начисляются дополнительные очки
+        result += (res.killedByTap * res.killedByTap - 4) * C.BIG_TILES_GROUP_MULTIPLIER; 
+
         return result;
     }
 
     /** Обновление интерфейса сцены после хода юзера */
-    afterUserKillGroup(group: Pos[], afterBomb = false) {
-        const newPoints = SceneGameplay.getPointsForGroup(group, undefined, afterBomb);
+    afterUserKillGroup(res: TurnResults) {
+        const newPoints = SceneGameplay.getPointsForGroup(res);
         this.userParams.points += newPoints;
         this.userParams.turns++;
         this.updateGameplayUI();
@@ -241,42 +266,117 @@ export default class SceneGameplay extends cc.Component {
         else {
             const maxWidth = this.progressBar.parent.width;
             const newWidth = minWidth + (maxWidth - minWidth) * goalProgress;
-            if (this.progressBarTween) {
-                this.progressBarTween.stop();
-            }
-            this.progressBarTween = cc.tween(this.progressBar)
+            this.progressBar.stopAllActions();
+            cc.tween(this.progressBar)
                 .to(this.progressBarMoveDuration, {width: newWidth})
                 .start();
         }
     }
 
-    killGroupOfTiles(group: Pos[], audioClip?: cc.AudioClip): Promise<void> {
-        const killTiles: Promise<void>[] = [];
+    bombShakingAnim(bomb: Tile): Promise<void> {
+
+        const BOMB_SHAKING_TIME = 0.2;
+
+        return new Promise((resolve, reject) => {
+            cc.tween(bomb.renderTile.node)
+                .to(BOMB_SHAKING_TIME / 3, {angle: -10})
+                .to(BOMB_SHAKING_TIME / 3, {angle: 10})
+                .to(BOMB_SHAKING_TIME / 3, {angle: 10})
+                .call(() => {
+                    resolve();
+                })
+                .start();
+        });
+    }
+
+    killTileAnim(tile: Tile): Promise<void> {
+
+        const KILL_TIME = 0.3;
+
+        return new Promise((resolve, reject) => {
+            cc.tween(tile.renderTile.node)
+                .to(KILL_TIME, {scale: 0.6, angle: 360, opacity: 0})
+                .call(() => resolve())
+                .removeSelf()
+                .start();
+        });
+    }
+
+    killBomb(bomb: Tile): Promise<TurnResults> {
+
+        const explosionArea = this.playField.getExplAreaForBomb(bomb.pos.x, bomb.pos.y);
+
+        return this.bombShakingAnim(bomb)
+            .then(_ => {
+                return this.killGroupOfTiles(explosionArea, this.bombExplSound, bomb);
+            });
+    }
+
+    killGroupOfTiles(group: Pos[], audioClip?: cc.AudioClip, bombEpicenter: Tile | null = null): Promise<TurnResults> {
+        const killedTiles: Promise<void | TurnResults>[] = [];
         this.playField.tilesKillDetected = true;
+
+        const accumResult = new TurnResults();
+
+        const forKill = new Set<Tile>();
 
         group.forEach(pos => {
             const tile = this.playField.getTileAt(pos.x, pos.y);
-            // сразу освобождаем место на поле
-            this.playField.setTileOnField(null, pos.x, pos.y);
-            // анимация уничтожения тайла
             if (!tile) {
                 return;
             }
-            const KILL_TIME = 0.3;
-            killTiles.push(new Promise((resolve, reject) => {
-                cc.tween(tile.renderTile.node)
-                    .to(KILL_TIME, {scale: 0.6, angle: 360, opacity: 0})
-                    .call(() => resolve())
-                    .removeSelf()
-                    .start();
-            }));
+
+            // сразу освобождаем место на поле
+            if (tile.onField) {
+                this.playField.setTileOnField(null, pos.x, pos.y);
+            }
+
+            forKill.add(tile);
+        });
+
+        if (bombEpicenter) {
+            if (bombEpicenter.onField) {
+                const pos = bombEpicenter.pos;
+                this.playField.setTileOnField(null, pos.x, pos.y);
+            }
+
+            forKill.add(bombEpicenter);
+        }
+
+        forKill.forEach(tile => {
+
+            if (bombEpicenter) {
+                accumResult.killedByExpl++;
+            }
+            else {
+                accumResult.killedByTap++;
+            }
+
+            if (tile.type === TileType.SIMPLE || tile === bombEpicenter) {
+                // анимация уничтожения тайла
+                killedTiles.push(this.killTileAnim(tile));
+
+            }
+            else if (tile.type === TileType.BOMB) {
+
+                // каскадный взрыв бомб
+                killedTiles.push(this.killBomb(tile));
+
+            }
         });
 
         if (audioClip) {
             cc.audioEngine.play(audioClip, false, C.DEFAULT_VOLUME);
         }
 
-        return Promise.all(killTiles).then();
+        return Promise.all(killedTiles).then((results: (void | TurnResults)[]) => {
+            results.forEach(res => {
+                if (res instanceof TurnResults) {
+                    accumResult.add(res);
+                }
+            });
+            return Promise.resolve(accumResult);
+        });
     }
 
     clickOnTile(tile: Tile) {
@@ -285,41 +385,9 @@ export default class SceneGameplay extends cc.Component {
 
         if (tile.type === TileType.BOMB) {
 
-            const explosion: Pos[] = [];
+            this.killBomb(tile).then((res: TurnResults) => {
 
-            const R = C.BOMB_EXPLOSION_RADIUS;
-            for (let dx = -R; dx <= R; dx++) {
-                for (let dy = -R; dy <= R; dy++) {
-
-                    if (Math.abs(dx) + Math.abs(dy) > R) {
-                        continue;
-                    }
-
-                    const xx = x + dx;
-                    const yy = y + dy;
-
-                    if (!this.playField.isValidPos(xx, yy)) {
-                        continue;
-                    }
-
-                    const victim = this.playField.field[xx][yy];
-                    if (!victim) {
-                        continue;
-                    }
-                    
-                    explosion.push(victim.pos);
-                }
-            }
-
-            // звуки взрывчатки
-            const clip = cc.loader.getRes("sounds/grenade");
-            if (clip) {
-                cc.audioEngine.play(clip, false, C.DEFAULT_VOLUME);
-            }
-
-            this.killGroupOfTiles(explosion, clip).then(_ => {
-
-                this.afterUserKillGroup(explosion, true);
+                this.afterUserKillGroup(res);
 
                 // после уничтожения всех тайлов - нужно проверить поле на возможность падений
                 this.playField.tilesKillDetected = false;
@@ -335,14 +403,11 @@ export default class SceneGameplay extends cc.Component {
 
                 // звуки оружия
                 const clip = cc.loader.getRes("sounds/gun" + ((Math.random() * 5) + 1));
-                if (clip) {
-                    cc.audioEngine.play(clip, false, C.DEFAULT_VOLUME);
-                }
 
-                this.killGroupOfTiles(group, clip).then(_ => {
+                this.killGroupOfTiles(group, clip).then((res: TurnResults) => {
 
                     // устанавливаем бомбу, если нужно
-                    this.afterUserKillGroup(group);
+                    this.afterUserKillGroup(res);
 
                     if (group.length >= gameConfig.groupSizeForBomb) {
 

@@ -30,12 +30,15 @@ export default class TilesMoveManager {
                     continue;
                 }
 
+                const tNode = tile.renderTile.node;
+
                 if (tile.trajectory.length === 0) {
                     tile.fallTime = 0;
+                    tNode.zIndex = 0;
                     continue;
                 }
 
-                const tNode = tile.renderTile.node;
+                tNode.zIndex = 1;
 
                 tile.fallTime += dt;
 

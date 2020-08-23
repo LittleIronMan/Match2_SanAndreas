@@ -1,9 +1,10 @@
-import { EMPTY_CELL, ANY_COLOR, BLOCKED_CELL } from "./Constants";
+import { EMPTY_CELL, ANY_COLOR, BLOCKED_CELL, BOMB_TAG } from "./Constants";
 import { LevelConfig } from "./LevelConfig";
 
 const _ = EMPTY_CELL;
 const A = ANY_COLOR;
 const BB = BLOCKED_CELL;
+const G = BOMB_TAG;
 
 export const debugLevels: LevelConfig[] = [
     {
@@ -36,4 +37,22 @@ export const debugLevels: LevelConfig[] = [
             [ A, A],
         ]
     }
+    {
+        name: "#3 Cascade of bombs",
+        fieldProps: {
+            width: 8,
+            height: 8,
+            countColors: 3
+        },
+        field: [
+            [ A, G, A, G, A, G, A, G],
+            [ A, A, A, A, A, A, A, A],
+            [ A, G, A, G, A, G, A, G],
+            [ A, A, A, A, A, A, A, A],
+            [ A, G, A, G, A, G, A, G],
+            [ A, A, A, A, A, A, A, A],
+            [ A, G, A, G, A, G, A, G],
+            [ A, A, A, A, A, A, A, A],
+        ]
+    },
 ];
