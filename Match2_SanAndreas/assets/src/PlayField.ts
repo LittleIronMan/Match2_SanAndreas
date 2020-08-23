@@ -61,30 +61,31 @@ export default class PlayField extends BasePlayField {
 
         if (tile) {
 
-            const pos = this.fieldPosToScenePos(tile.pos);
-
             if (opts.onInit || opts.onDrop || opts.onGenerating) {
 
                 // при инициализации массива тайлов, или при рождении новых тайлов -
                 // устанавливаем их ноды на сцене
+                const realPos = tile.pos.clone();
+
                 if (opts.onDrop) {
-                    tile.trajectory.push(pos.clone());
+                    tile.trajectory.push(new Pos(x, y));
 
                     const downTile = this.field[x][1] as Tile;
                     if (downTile && downTile.isDropped) {
-                        pos.y = downTile.renderTile.node.y + TILE_HEIGHT;
+                        realPos.y = downTile.getRealPos().y - 1;
                     }
                     else {
-                        pos.y += TILE_HEIGHT;
+                        realPos.y = -1;
                     }
                     tile.isDropped = true;
                     tile.renderTile.node.opacity = 0;
                 }
-                tile.renderTile.node.setPosition(pos);
+
+                tile.setRealPos(realPos, this);
 
             }
             else {
-                tile.trajectory.push(pos);
+                tile.trajectory.push(new Pos(x, y));
             }
 
         }
@@ -94,21 +95,39 @@ export default class PlayField extends BasePlayField {
     }
 
     /** Конвертирует дискретную позицию тайла на поле в "пиксельную" позицию на сцене. Мемоизирована */
-    fieldPosToScenePos(fieldPos: Pos): cc.Vec2 {
-        const hash = this.getPosHash(fieldPos.x, fieldPos.y);
-        const cache = this._mem1[hash];
-        if (cache) { return cache.clone(); }
+    fieldPosToScenePos(fieldPos: Pos, memoize = true): cc.Vec2 {
+        let hash: any;
+
+        if (memoize) {
+            hash = this.getPosHash(fieldPos.x, fieldPos.y);
+            const cache = this._mem1[hash];
+            if (cache) { return cache.clone(); }
+        }
+
         const pos = cc.v2((fieldPos.x - 0.5 * (this.width - 1)) * TILE_WIDTH, (0.5 * (this.height - 1) - fieldPos.y) * TILE_HEIGHT);
-        this._mem1[hash] = pos;
+
+        if (memoize) {
+            this._mem1[hash] = pos;
+        }
+
         return pos.clone();
     }
     private _mem1: {[hash: number]: cc.Vec2} = {}
 
-    scenePosToFieldPos(scenePos: cc.Vec2): Pos {
+    /**
+     * @param scenePos "Пиксельная" позиция тайла на сцене
+     * @param roundValue Нужно ли округлять координаты результата(true по-умолчанию)
+     * @return Эквивалентная позиция тайла на игровом поле, чаще всего вектор с целочисленными координатами
+     */
+    scenePosToFieldPos(scenePos: cc.Vec2, roundValue = true): Pos {
         const pos = this.node.convertToNodeSpaceAR(scenePos); // позиция относительно центра поля
         const centerOffset = cc.v2(this.width * TILE_WIDTH, -this.height * TILE_HEIGHT).mul(0.5);
         const topLeftPos = pos.add(centerOffset); // позиция относительно верхнего-левого угла поля
-        const fieldPos = new Pos(Math.floor(topLeftPos.x / TILE_WIDTH), Math.floor(-topLeftPos.y / TILE_HEIGHT));
+        let fieldPos = new Pos(topLeftPos.x / TILE_WIDTH, -topLeftPos.y / TILE_HEIGHT);
+        if (roundValue) {
+            fieldPos.x = Math.floor(fieldPos.x);
+            fieldPos.y = Math.floor(fieldPos.y);
+        }
         return fieldPos;
     }
 

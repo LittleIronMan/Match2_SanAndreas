@@ -2,8 +2,8 @@ export const ALPHA_MAX = 255;
 
 export const TILE_WIDTH = 171;
 export const TILE_HEIGHT = 192;
-export const TILES_ACCELERATION = 8000;
-export const TILES_MAX_SPEED = 2300;
+export const TILES_ACCELERATION = 40;
+export const TILES_MAX_SPEED = 12;
 
 /** Минимальная ширина пустоты снаружи рамки поля */
 export const FIELD_EX_CONTAINER_PADDING = 100;

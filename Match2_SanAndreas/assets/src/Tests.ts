@@ -236,10 +236,10 @@ export function testAll(): boolean {
     testList.push({name: "Tiles move #1", func: () => {
         const results: boolean[] = [];
 
-        const initPos = cc.v2(0, 0);
+        const initPos = new Pos(0, 0);
         const path = [
-            cc.v2(1, 1),
-            cc.v2(2, 0)
+            new Pos(1, 1),
+            new Pos(2, 0)
         ];
         const deltaMove = 2;
 
@@ -249,7 +249,7 @@ export function testAll(): boolean {
         results.push(   moveResult.targetPosUpdated   );
         results.push(   !moveResult.needNewTarget   );
         const q2 = Math.sqrt(2);
-        results.push(   cc.Vec2.equals(moveResult.pos, cc.v2(q2, 2 - q2), EPSILON)   );
+        results.push(   cc.Vec2.equals(moveResult.pos, new Pos(q2, 2 - q2), EPSILON)   );
         results.push(   path.length === 1   );
 
         return results;
@@ -259,10 +259,10 @@ export function testAll(): boolean {
     testList.push({name: "Tiles move #2", func: () => {
         const results: boolean[] = [];
 
-        const initPos = cc.v2(0, 0);
+        const initPos = new Pos(0, 0);
         const path = [
-            cc.v2(1, 1),
-            cc.v2(2, 0)
+            new Pos(1, 1),
+            new Pos(2, 0)
         ];
         const deltaMove = 3;
 
@@ -271,7 +271,7 @@ export function testAll(): boolean {
         results.push(   moveResult.posUpdated   );
         results.push(   moveResult.targetPosUpdated   );
         results.push(   moveResult.needNewTarget   );
-        results.push(   cc.Vec2.equals(moveResult.pos, cc.v2(2, 0))   );
+        results.push(   cc.Vec2.equals(moveResult.pos, new Pos(2, 0))   );
         results.push(   path.length === 0   );
 
         return results;
@@ -281,10 +281,10 @@ export function testAll(): boolean {
     testList.push({name: "Tiles move #3", func: () => {
         const results: boolean[] = [];
 
-        const initPos = cc.v2(0, 0);
+        const initPos = new Pos(0, 0);
         const path = [
-            cc.v2(1, 1),
-            cc.v2(2, 0)
+            new Pos(1, 1),
+            new Pos(2, 0)
         ];
         const deltaMove = 0.5;
 
@@ -294,7 +294,7 @@ export function testAll(): boolean {
         results.push(   !moveResult.targetPosUpdated   );
         results.push(   !moveResult.needNewTarget   );
         const q = 0.5 / Math.sqrt(2);
-        results.push(   cc.Vec2.equals(moveResult.pos, cc.v2(q, q), EPSILON)   );
+        results.push(   cc.Vec2.equals(moveResult.pos, new Pos(q, q), EPSILON)   );
         results.push(   path.length === 2   );
 
         return results;

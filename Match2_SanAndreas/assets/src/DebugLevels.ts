@@ -8,7 +8,7 @@ const G = BOMB_TAG;
 
 export const debugLevels: LevelConfig[] = [
     {
-        name: "#1 Diagonal Fallings",
+        name: "Diagonal Fallings",
         fieldProps: {
             width: 8,
             height: 8,
@@ -26,7 +26,23 @@ export const debugLevels: LevelConfig[] = [
         ]
     },
     {
-        name: "#2 2x2 field",
+        name: "Diagonal Fallings #2",
+        fieldProps: {
+            width: 3,
+            height: 6,
+            countColors: 3
+        },
+        field: [
+            [ 1,BB, 2],
+            [ _,BB, _],
+            [ _,BB, _],
+            [ _,BB, _],
+            [BB, _,BB],
+            [BB,BB, G],
+        ]
+    },
+    {
+        name: "2x2 field",
         fieldProps: {
             width: 2,
             height: 2,
@@ -36,9 +52,9 @@ export const debugLevels: LevelConfig[] = [
             [ A, A],
             [ A, A],
         ]
-    }
+    },
     {
-        name: "#3 Cascade of bombs",
+        name: "Cascade of bombs",
         fieldProps: {
             width: 8,
             height: 8,
