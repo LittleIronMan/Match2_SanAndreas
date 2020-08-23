@@ -2,11 +2,23 @@ import PlayField from "./PlayField";
 import Tile from "./Tile";
 import Pos from "./Pos";
 
+/**
+ * @class
+ * @classdesc Вспомогательный класс, отображает некоторую информацию о перемещении тайла по траектории
+ */
 class UpdatePosResult {
+    /** Флаг того, была ли обновлена позиция, после вызова фукнции перемещения */
     posUpdated = false;
+
+    /** Новая позиция тайла */
     pos: Pos;
+
+    /** Была ли достигнута первая точка траектории */
     targetPosUpdated = false;
+
+    /** Был ли достигнут конец траектории */
     needNewTarget = false;
+
     constructor(currentPos: Pos) {
         this.pos = currentPos.clone();
     }
@@ -14,7 +26,7 @@ class UpdatePosResult {
 
 /**
  * @class
- * @classdesc Вспомогательный класс, ответственный за перемещение тайлов по полю
+ * @classdesc Менеджеры перемещения тайлов по полю
  */
 export default class TilesMoveManager {
 

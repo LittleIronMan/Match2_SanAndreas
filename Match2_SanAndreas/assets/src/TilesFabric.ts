@@ -12,6 +12,10 @@ const SAN_ANDREAS_GANGS_CONFIG: { name: string; avatars: number; color: string; 
     { name: "rifa", avatars: 4, color: "#527881" },
 ];
 
+/**
+ * @class
+ * @classdesc Фабрика для создания тайлов
+ */
 export default class TilesFabric {
     static create(type: TileType, color: number, prefab: TileRender): Tile {
         const newTile = new Tile(type, color);

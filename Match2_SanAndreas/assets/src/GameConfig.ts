@@ -1,6 +1,10 @@
 import * as C from "./Constants";
 import LevelConfig from "./LevelConfig";
 
+/**
+ * @class
+ * @classdesc Настройки игры
+ */
 class GameConfig {
     /** Ширина поля(в тайлах) */
     N = C.FIELD_WIDTH_DEFAULT;
