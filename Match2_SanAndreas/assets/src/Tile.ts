@@ -46,7 +46,7 @@ export default class Tile extends BaseTile {
     }
 
     getRealPos(): Pos {
-        return this._realPos;
+        return this._realPos.clone();
     }
 
     setRealPos(newPos: Pos, playField: PlayField) {

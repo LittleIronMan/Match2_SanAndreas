@@ -8,7 +8,7 @@ class UpdatePosResult {
     targetPosUpdated = false;
     needNewTarget = false;
     constructor(currentPos: Pos) {
-        this.pos = currentPos;
+        this.pos = currentPos.clone();
     }
 }
 
@@ -83,7 +83,7 @@ export default class TilesMoveManager {
     }
 
     static updateTilePos(currentPos: Pos, path: Pos[], deltaMove: number): UpdatePosResult {
-        const result = new UpdatePosResult(currentPos.clone());
+        const result = new UpdatePosResult(currentPos);
 
         do {
             if (path.length === 0) {
