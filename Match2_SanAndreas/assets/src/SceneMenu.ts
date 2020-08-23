@@ -117,7 +117,7 @@ export default class SceneMenu extends cc.Component {
 
 			var handler = new cc.Component.EventHandler();
 			handler.target = this.node;
-			handler.component = SceneMenu.name;
+			handler.component = "SceneMenu";
             handler.handler = "onSelectLevel";
             handler.customEventData = idx.toString();
 
