@@ -132,7 +132,7 @@ export default class SceneGameplay extends cc.Component {
 
         let initPlayField: () => void;
 
-        const tilesFabric = new TilesFabric_Match2_SanAndreas(this.tilesPrefab, this.fieldPlace);
+        const tilesFabric = new TilesFabric_Match2_SanAndreas(this.tilesPrefab);
 
         if (gameConfig.customLevel) {
             const props = gameConfig.customLevel.fieldProps;

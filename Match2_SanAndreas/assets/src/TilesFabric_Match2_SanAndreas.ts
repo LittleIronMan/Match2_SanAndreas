@@ -19,16 +19,14 @@ const SAN_ANDREAS_GANGS_CONFIG: { name: string; avatars: number; color: string; 
  */
 export default class TilesFabric_Match2_SanAndreas extends TilesFabric {
     tilesPrefab: TileRender;
-    fieldArea: cc.Node;
 
     /**
      * @param tilesPrefab Префаб для создания и настройки тайлов
      * @param fieldArea Нод, на котором будут размещаться новорожденные тайлы
      */
-    constructor(tilesPrefab: TileRender, fieldArea: cc.Node) {
+    constructor(tilesPrefab: TileRender) {
         super();
         this.tilesPrefab = tilesPrefab;
-        this.fieldArea = fieldArea;
     }
 
     create(type: TileType, color: number): Tile {

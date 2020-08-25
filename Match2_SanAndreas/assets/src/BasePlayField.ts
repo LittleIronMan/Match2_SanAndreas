@@ -144,31 +144,31 @@ export default class BasePlayField {
     initWith(arr: number[][]) {
         for (let x = 0; x < this.width; x++) {
             for (let y = 0; y < this.height; y++) {
-                let color = arr[y][x];
+                let tag = arr[y][x];
 
-                if (color == TileTag.ANY_COLOR) {
-                    color = this.getRandomColor();
+                if (tag == TileTag.ANY_COLOR) {
+                    tag = this.getRandomColor();
                 }
 
-                if (color > 0) {
+                if (tag > 0) {
 
-                    const newTile = this.createTile(TileType.SIMPLE, color);
+                    const newTile = this.createTile(TileType.SIMPLE, tag);
                     this.setTileOnField(newTile, x, y, { onInit: true });
 
                 }
-                else if (color === TileTag.BLOCKED_CELL) {
+                else if (tag === TileTag.BLOCKED_CELL) {
 
                     const posHash = this.getPosHash(x, y);
                     this.blockedCells[posHash] = OK;
 
-                    const newTile = this.createTile(TileType.BLOCK, color);
+                    const newTile = this.createTile(TileType.BLOCK, tag);
                     this.setTileOnField(newTile, x, y, { onInit: true });
                     this.setTileOnField(null, x, y);
 
                 }
-                else if (color === TileTag.BOMB_TAG) {
+                else if (tag === TileTag.BOMB_TAG) {
 
-                    const bomb = this.createTile(TileType.BOMB, color);
+                    const bomb = this.createTile(TileType.BOMB, tag);
                     this.setTileOnField(bomb, x, y, { onInit: true });
                 }
 
@@ -184,9 +184,9 @@ export default class BasePlayField {
 
         for (let x = 0; x < this.width; x++) {
             for (let y = 0; y < this.height; y++) {
-                const testValue = arr[y][x];
+                const tag = arr[y][x];
 
-                if (testValue === TileTag.ANY_COLOR) {
+                if (tag === TileTag.ANY_COLOR) {
                     continue;
                 }
 
@@ -194,19 +194,19 @@ export default class BasePlayField {
 
                 if (!tile) {
 
-                    if (testValue === TileTag.EMPTY_CELL) {
+                    if (tag === TileTag.EMPTY_CELL) {
                         continue;
                     }
 
                     const posHash = this.getPosHash(x, y);
-                    if (testValue === TileTag.BLOCKED_CELL && this.blockedCells[posHash]) {
+                    if (tag === TileTag.BLOCKED_CELL && this.blockedCells[posHash]) {
                         continue;
                     }
 
                     mismatchFound = true; break;
                 }
 
-                if (tile.color !== testValue) {
+                if (tile.color !== tag) {
                     mismatchFound = true; break;
                 }
             }

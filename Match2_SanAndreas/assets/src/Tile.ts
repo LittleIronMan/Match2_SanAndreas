@@ -24,7 +24,7 @@ export default class Tile extends BaseTile {
     private _realPos: Pos = null as any;
 
     /**
-     * Считает скорость движения тайла, исходя из общего времени падения fallTime.
+     * Рассчитывает скорость движения тайла, исходя из общего времени падения fallTime.
      * @param futureDt Если передать аргумент futureDt,
      * то эта величина времени прибавляется к fallTime,
      * тем самым рассчитывается "будущая" скорость.

@@ -1,10 +1,10 @@
-import { EMPTY_CELL, ANY_COLOR, BLOCKED_CELL, BOMB_TAG } from "./Constants";
+import { TileTag } from "./TileType";
 import LevelConfig from "./LevelConfig";
 
-const _ = EMPTY_CELL;
-const A = ANY_COLOR;
-const BB = BLOCKED_CELL;
-const G = BOMB_TAG;
+const _ = TileTag.EMPTY_CELL;
+const A = TileTag.ANY_COLOR;
+const BB = TileTag.BLOCKED_CELL;
+const G = TileTag.BOMB_TAG;
 
 /** Захардкоженные дебажные уровни */
 export const debugLevels: LevelConfig[] = [
