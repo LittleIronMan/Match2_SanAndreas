@@ -1,7 +1,8 @@
 import gameConfig from "./GameConfig";
 import { LEFT, RIGHT, DOWN, UP, OK } from "./Constants";
 import * as C from "./Constants";
-import BaseTile, { TileType } from "./BaseTile";
+import BaseTile from "./BaseTile";
+import TileType from "./TileType";
 import Pos from "./Pos";
 
 type Dir = (typeof RIGHT | typeof LEFT);
@@ -84,11 +85,6 @@ export default class BasePlayField {
      */
     fallToSideTriggers: { [posHash: number]: Dir } = {};
 
-    /**
-     * @param width ширина поля(в тайлах, т.е. натуральное число)
-     * @param height высота поля
-     * @param countColors максимальное кол-во различных цветов тайлов на поле
-     */
     constructor({ width, height, countColors }: FieldProps) {
         this.width = width;
         this.height = height;

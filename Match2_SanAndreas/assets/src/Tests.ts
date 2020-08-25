@@ -3,6 +3,7 @@ import Pos from "./Pos";
 import { TILE_WIDTH, TILE_HEIGHT, EMPTY_CELL, ANY_COLOR, BLOCKED_CELL } from './Constants';
 import PlayField from './PlayField';
 import TilesMoveManager from './TilesMoveManager';
+import TilesFabric from './TilesFabric';
 
 const fieldParams = {width: 3, height: 3, countColors: 4};
 const _ = EMPTY_CELL;
@@ -200,7 +201,7 @@ export function testAll(): boolean {
     const fieldPos = (x: number, y: number) => new Pos(x, y);
 
     testList.push({name: "Position convert #1", func: () => {
-        const f = new PlayField(fieldParams);
+        const f = new PlayField(fieldParams, new TilesFabric());
 
         const ScenePos = WithEqualsMethod<cc.Vec2>((selfPos: cc.Vec2, anotherPos: cc.Vec2) => {
             return cc.Vec2.equals(selfPos, anotherPos, EPSILON);
@@ -217,7 +218,7 @@ export function testAll(): boolean {
     }});
 
     testList.push({name: "Position convert #2", func: () => {
-        const f = new PlayField(fieldParams);
+        const f = new PlayField(fieldParams, new TilesFabric());
 
         function convert(scenePos: cc.Vec2): Pos {
             return f.scenePosToFieldPos(scenePos);

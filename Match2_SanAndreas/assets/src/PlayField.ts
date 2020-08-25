@@ -1,8 +1,8 @@
 import BasePlayField, { SetOnFieldOptions, FieldProps } from "./BasePlayField";
 import Pos from "./Pos";
-import BaseTile, { TileType } from "./BaseTile";
+import BaseTile from "./BaseTile";
+import TileType from "./TileType";
 import { TILE_HEIGHT, TILE_WIDTH, ANY_COLOR } from "./Constants";
-import TileRender from "./TileRender";
 import Tile from "./Tile";
 import TilesFabric from "./TilesFabric";
 import TilesMoveManager from "./TilesMoveManager";
@@ -14,8 +14,8 @@ import TilesMoveManager from "./TilesMoveManager";
 export default class PlayField extends BasePlayField {
     node: cc.Node;
 
-    /** Префаб для создания тайлов */
-    tilesPrefab: TileRender = null as any;
+    /** Фабрика для создания тайлов */
+    tilesFabric: TilesFabric;
 
     /** Флаг того, что необходимо пересчитать дискретные позиции тайлов */
     needCheckTilesFall = false;
@@ -33,23 +33,24 @@ export default class PlayField extends BasePlayField {
         return this.tilesFallDetected || this.tilesKillDetected;
     }
 
-    constructor(props: FieldProps) {
+    constructor(props: FieldProps, tilesFabric: TilesFabric) {
         super(props);
         this.node = new cc.Node();
         this.moveManager = new TilesMoveManager();
+        this.tilesFabric = tilesFabric;
     }
 
     /**
      * Перегруженная фабрика, для создания "реальных" тайлов.
      * @param type Тип тайла, обязательный аргумент
-     * @param color Цвет тайла - натуральное число <= C(кол-ву цветов на поле)
+     * @param color Цвет тайла - натуральное число <= макс. кол-ву цветов на поле
      * @returns Новый объект реального тайла
      * @public
      */
     createTile(type: TileType, color = ANY_COLOR): BaseTile {
-        const newTile = TilesFabric.create(type, color, this.tilesPrefab);
+        const newTile = this.tilesFabric.create(type, color);
 
-        this.node.addChild(newTile.renderTile.node);
+        this.node.addChild(newTile.node);
         return newTile;
     }
 
@@ -83,7 +84,7 @@ export default class PlayField extends BasePlayField {
                         realPos.y = -1;
                     }
                     tile.isDropped = true;
-                    tile.renderTile.node.opacity = 0;
+                    tile.node.opacity = 0;
                 }
 
                 tile.setRealPos(realPos, this);

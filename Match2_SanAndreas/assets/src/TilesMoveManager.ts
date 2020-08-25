@@ -44,7 +44,7 @@ export default class TilesMoveManager {
                     continue;
                 }
 
-                const tNode = tile.renderTile.node;
+                const tNode = tile.node;
 
                 if (tile.trajectory.length === 0) {
                     tile.fallTime = 0;

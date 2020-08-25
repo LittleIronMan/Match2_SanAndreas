@@ -1,6 +1,5 @@
 import Pos from "./Pos";
-
-export enum TileType { SIMPLE, BOMB, BLOCK };
+import TileType from "./TileType";
 
 /**
  * @class

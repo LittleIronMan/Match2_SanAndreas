@@ -7,7 +7,8 @@ import TileRender from "./TileRender";
 import Tile from "./Tile";
 import gameConfig from "./GameConfig";
 import * as C from "./Constants";
-import { TileType } from "./BaseTile";
+import TileType from "./TileType";
+import TilesFabric_Match2_SanAndreas from "./TilesFabric_Match2_SanAndreas";
 
 const { ccclass, property } = cc._decorator;
 
@@ -31,7 +32,7 @@ class TurnResults {
 @ccclass
 export default class SceneGameplay extends cc.Component {
     @property(cc.Node)
-    fieldPlace: cc.Node = null as any; // чтобы компилятор не ругался
+    fieldPlace: cc.Node = null as any;
 
     @property(TileRender)
     tilesPrefab: TileRender = null as any;
@@ -41,8 +42,6 @@ export default class SceneGameplay extends cc.Component {
     touchStartTile: Tile | null = null;
 
     playField: PlayField = null as any;
-
-    initPlayField: () => void = null as any;
 
     levelParams: {
         turnsLimit: number,
@@ -99,7 +98,8 @@ export default class SceneGameplay extends cc.Component {
         }
 
         let fail = false;
-        const Props = ["fieldPlace",
+        const Props = [
+            "fieldPlace",
             "tilesPrefab",
             "progressBar",
             "turnsLeftLabel",
@@ -129,20 +129,25 @@ export default class SceneGameplay extends cc.Component {
             goal: SceneGameplay.getPointsForGroup(averageTurnResults) * C.LEVEL_TURNS_LIMIT,
         };
 
+
+        let initPlayField: () => void;
+
+        const tilesFabric = new TilesFabric_Match2_SanAndreas(this.tilesPrefab, this.fieldPlace);
+
         if (gameConfig.customLevel) {
             const props = gameConfig.customLevel.fieldProps;
             const arr = gameConfig.customLevel.field;
-            this.playField = new PlayField(props);
+            this.playField = new PlayField(props, tilesFabric);
 
-            this.initPlayField = () => {
+            initPlayField = () => {
                 this.playField.initWith(arr);
             }
 
             gameConfig.customLevel = undefined;
         }
         else {
-            this.playField = new PlayField({ width: gameConfig.N, height: gameConfig.M, countColors: gameConfig.C });
-            this.initPlayField = () => {
+            this.playField = new PlayField({ width: gameConfig.N, height: gameConfig.M, countColors: gameConfig.C }, tilesFabric);
+            initPlayField = () => {
                 this.playField.randomInit();
             }
         }
@@ -171,8 +176,7 @@ export default class SceneGameplay extends cc.Component {
             this.fieldPlace.addChild(this.playField.node);
 
             // заполняем поле тайлами
-            this.playField.tilesPrefab = this.tilesPrefab;
-            this.initPlayField();
+            initPlayField();
 
             // корректируем размер поля
             const w = this.fieldPlace.width = this.playField.width * C.TILE_WIDTH + C.FIELD_HORIZONTAL_PADDING;
@@ -285,7 +289,7 @@ export default class SceneGameplay extends cc.Component {
         const BOMB_SHAKING_TIME = 0.2;
 
         return new Promise((resolve, reject) => {
-            cc.tween(bomb.renderTile.node)
+            cc.tween(bomb.node)
                 .to(BOMB_SHAKING_TIME / 3, { angle: -10 })
                 .to(BOMB_SHAKING_TIME / 3, { angle: 10 })
                 .to(BOMB_SHAKING_TIME / 3, { angle: 10 })
@@ -301,7 +305,7 @@ export default class SceneGameplay extends cc.Component {
         const KILL_TIME = 0.3;
 
         return new Promise((resolve, reject) => {
-            cc.tween(tile.renderTile.node)
+            cc.tween(tile.node)
                 .to(KILL_TIME, { scale: 0.6, angle: 360, opacity: 0 })
                 .call(() => resolve())
                 .removeSelf()
@@ -421,13 +425,13 @@ export default class SceneGameplay extends cc.Component {
                         let bomb = this.playField.createTile(TileType.BOMB) as Tile;
                         this.playField.setTileOnField(bomb, x, y, { onGenerating: true });
 
-                        const bombNode = bomb.renderTile.node;
+                        const bombNode = bomb.node;
                         bombNode.opacity = 0;
                         bombNode.scale = 0.5;
                         bombNode.angle = -360;
 
                         return new Promise((resolve, reject) => {
-                            cc.tween(bomb.renderTile.node)
+                            cc.tween(bomb.node)
                                 .to(0.3, { opacity: 255, scale: 1, angle: 0 })
                                 .call(() => {
                                     resolve();

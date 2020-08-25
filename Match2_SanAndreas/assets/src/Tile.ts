@@ -1,4 +1,5 @@
-import BaseTile, { TileType } from "./BaseTile";
+import BaseTile from "./BaseTile";
+import TileType from "./TileType";
 import TileRender from "./TileRender";
 import { TILES_ACCELERATION, TILES_MAX_SPEED, ALPHA_MAX } from "./Constants";
 import Pos from "./Pos";
@@ -10,12 +11,12 @@ import PlayField from "./PlayField";
  */
 export default class Tile extends BaseTile {
     /** Ссылка на нод, который рендерит тайл на сцене */
-    renderTile: TileRender;
+    node: cc.Node;
 
     /** Тайл только что выпала с неба, еще появляется */
     isDropped = false;
 
-    /** Общее время падения столбца */
+    /** Общее время движения тайла */
     fallTime: number = 0;
 
     /** траектория перемещения тайла */
@@ -24,11 +25,11 @@ export default class Tile extends BaseTile {
     private _realPos: Pos = null as any;
 
     /**
-     * Считает скорость движения тайлов в столбце, исходя из общего времени падения fallTime.
+     * Считает скорость движения тайла, исходя из общего времени падения fallTime.
      * @param futureDt Если передать аргумент futureDt,
      * то эта величина времени прибавляется к fallTime,
      * тем самым рассчитывается "будущая" скорость.
-     * @returns Cкорость тайлов в столбце
+     * @returns Cкорость тайла
      * @public
      */
     getSpeed(futureDt = 0): number {
@@ -37,15 +38,10 @@ export default class Tile extends BaseTile {
         return speed;
     }
 
-    /** @description Движется ли тайл, или нет. */
-    isMove(): boolean {
-        return this.fallTime > 0;
-    }
-
     resetDroppedFlag() {
         if (this.isDropped) {
             this.isDropped = false;
-            this.renderTile.node.opacity = ALPHA_MAX;
+            this.node.opacity = ALPHA_MAX;
         }
     }
 
@@ -56,11 +52,11 @@ export default class Tile extends BaseTile {
     setRealPos(newPos: Pos, playField: PlayField) {
         this._realPos = newPos;
         const pixelPos = playField.fieldPosToScenePos(newPos, false);
-        this.renderTile.node.setPosition(pixelPos);
+        this.node.setPosition(pixelPos);
     }
 
     constructor(type: TileType, color: number) {
         super(type, color);
-        this.renderTile = null as any; // чтобы компилятор не ругался, после вызова фукнции createTile - поле node никогда не будет null
+        this.node = null as any;
     }
 }
