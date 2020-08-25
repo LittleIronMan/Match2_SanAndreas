@@ -26,18 +26,6 @@ export const RIGHT = 1;
 export const UP = 1;
 export const DOWN = -1;
 
-/** Тег пустой ячейки поля */
-export const EMPTY_CELL = 0;
-
-/** Тег тайла произвольного цвета */
-export const ANY_COLOR = -1;
-
-/** Тег заблокированной ячейки поля */
-export const BLOCKED_CELL = -2;
-
-/** Тег бомбы на поле */
-export const BOMB_TAG = -3;
-
 
 export const DEFAULT_VOLUME = 0.3;
 

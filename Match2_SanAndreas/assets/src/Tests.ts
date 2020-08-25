@@ -1,14 +1,15 @@
 import BasePlayField from './BasePlayField';
 import Pos from "./Pos";
-import { TILE_WIDTH, TILE_HEIGHT, EMPTY_CELL, ANY_COLOR, BLOCKED_CELL } from './Constants';
+import { TILE_WIDTH, TILE_HEIGHT } from './Constants';
 import PlayField from './PlayField';
 import TilesMoveManager from './TilesMoveManager';
 import TilesFabric from './TilesFabric';
+import { TileTag } from './TileType';
 
 const fieldParams = {width: 3, height: 3, countColors: 4};
-const _ = EMPTY_CELL;
-const A = ANY_COLOR;
-const BB = BLOCKED_CELL; // Почему BB? Потому что в массивах более заметно.
+const _ = TileTag.EMPTY_CELL;
+const A = TileTag.ANY_COLOR;
+const BB = TileTag.BLOCKED_CELL; // Почему BB? Потому что в массивах более заметно.
 
 const EPSILON = 0.01;
 
@@ -37,28 +38,28 @@ export function testAll(): boolean {
             [ 4, 2, 1],
             [ _, _, _]
         ]);
-        const TileColor = WithEqualsMethod<number>();
-        function colorOfTile(x: number, y: number): InstanceType<typeof TileColor> {
-            let color: number;
+        const Tag = WithEqualsMethod<number>();
+        function tileInCell(x: number, y: number): InstanceType<typeof Tag> {
+            let tag: number;
             let tile = f.field[x][y];
             if (!tile) {
-                color = EMPTY_CELL;
+                tag = TileTag.EMPTY_CELL;
             }
             else {
-                color = tile.color;
+                tag = tile.color;
             }
-            return new TileColor(color);
+            return new Tag(tag);
         }
         const results: boolean[] = [];
-        results.push(   colorOfTile(0,0).equals(3)   );
-        results.push(   colorOfTile(1,0).equals(3)   );
-        results.push(   colorOfTile(2,0).equals(1)   );
-        results.push(   colorOfTile(0,1).equals(4)   );
-        results.push(   colorOfTile(1,1).equals(2)   );
-        results.push(   colorOfTile(2,1).equals(1)   );
-        results.push(   colorOfTile(0,2).equals(_)   );
-        results.push(   colorOfTile(1,2).equals(_)   );
-        results.push(   colorOfTile(2,2).equals(_)   );
+        results.push(   tileInCell(0,0).equals(3)   );
+        results.push(   tileInCell(1,0).equals(3)   );
+        results.push(   tileInCell(2,0).equals(1)   );
+        results.push(   tileInCell(0,1).equals(4)   );
+        results.push(   tileInCell(1,1).equals(2)   );
+        results.push(   tileInCell(2,1).equals(1)   );
+        results.push(   tileInCell(0,2).equals(_)   );
+        results.push(   tileInCell(1,2).equals(_)   );
+        results.push(   tileInCell(2,2).equals(_)   );
 
         return results;
     }});

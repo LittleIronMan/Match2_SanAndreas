@@ -2,7 +2,7 @@ import gameConfig from "./GameConfig";
 import { LEFT, RIGHT, DOWN, UP, OK } from "./Constants";
 import * as C from "./Constants";
 import BaseTile from "./BaseTile";
-import TileType from "./TileType";
+import TileType, { TileTag } from "./TileType";
 import Pos from "./Pos";
 
 type Dir = (typeof RIGHT | typeof LEFT);
@@ -103,7 +103,7 @@ export default class BasePlayField {
      * Функция создания нового тайла на поле,
      * Может быть перегружена в классах-наследниках
      */
-    createTile(type: TileType, color: number = C.ANY_COLOR): BaseTile {
+    createTile(type: TileType, color: number = TileTag.ANY_COLOR): BaseTile {
         const newTile = new BaseTile(type, color);
         return newTile;
     }
@@ -146,7 +146,7 @@ export default class BasePlayField {
             for (let y = 0; y < this.height; y++) {
                 let color = arr[y][x];
 
-                if (color == C.ANY_COLOR) {
+                if (color == TileTag.ANY_COLOR) {
                     color = this.getRandomColor();
                 }
 
@@ -156,7 +156,7 @@ export default class BasePlayField {
                     this.setTileOnField(newTile, x, y, { onInit: true });
 
                 }
-                else if (color === C.BLOCKED_CELL) {
+                else if (color === TileTag.BLOCKED_CELL) {
 
                     const posHash = this.getPosHash(x, y);
                     this.blockedCells[posHash] = OK;
@@ -166,7 +166,7 @@ export default class BasePlayField {
                     this.setTileOnField(null, x, y);
 
                 }
-                else if (color === C.BOMB_TAG) {
+                else if (color === TileTag.BOMB_TAG) {
 
                     const bomb = this.createTile(TileType.BOMB, color);
                     this.setTileOnField(bomb, x, y, { onInit: true });
@@ -186,7 +186,7 @@ export default class BasePlayField {
             for (let y = 0; y < this.height; y++) {
                 const testValue = arr[y][x];
 
-                if (testValue === C.ANY_COLOR) {
+                if (testValue === TileTag.ANY_COLOR) {
                     continue;
                 }
 
@@ -194,12 +194,12 @@ export default class BasePlayField {
 
                 if (!tile) {
 
-                    if (testValue === C.EMPTY_CELL) {
+                    if (testValue === TileTag.EMPTY_CELL) {
                         continue;
                     }
 
                     const posHash = this.getPosHash(x, y);
-                    if (testValue === C.BLOCKED_CELL && this.blockedCells[posHash]) {
+                    if (testValue === TileTag.BLOCKED_CELL && this.blockedCells[posHash]) {
                         continue;
                     }
 

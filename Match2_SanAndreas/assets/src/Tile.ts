@@ -1,6 +1,5 @@
 import BaseTile from "./BaseTile";
 import TileType from "./TileType";
-import TileRender from "./TileRender";
 import { TILES_ACCELERATION, TILES_MAX_SPEED, ALPHA_MAX } from "./Constants";
 import Pos from "./Pos";
 import PlayField from "./PlayField";

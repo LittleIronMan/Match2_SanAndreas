@@ -1,8 +1,8 @@
 import BasePlayField, { SetOnFieldOptions, FieldProps } from "./BasePlayField";
 import Pos from "./Pos";
 import BaseTile from "./BaseTile";
-import TileType from "./TileType";
-import { TILE_HEIGHT, TILE_WIDTH, ANY_COLOR } from "./Constants";
+import TileType, { TileTag } from "./TileType";
+import { TILE_HEIGHT, TILE_WIDTH } from "./Constants";
 import Tile from "./Tile";
 import TilesFabric from "./TilesFabric";
 import TilesMoveManager from "./TilesMoveManager";
@@ -47,7 +47,7 @@ export default class PlayField extends BasePlayField {
      * @returns Новый объект реального тайла
      * @public
      */
-    createTile(type: TileType, color = ANY_COLOR): BaseTile {
+    createTile(type: TileType, color = TileTag.ANY_COLOR): BaseTile {
         const newTile = this.tilesFabric.create(type, color);
 
         this.node.addChild(newTile.node);
